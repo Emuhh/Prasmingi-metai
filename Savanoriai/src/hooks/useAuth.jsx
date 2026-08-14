@@ -9,7 +9,7 @@ async function fetchRoleWithTimeout(userId) {
       supabase.from('profiles').select('role').eq('id', userId).single(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
     ])
-    return result.data?.role || 'mentorius'
+    return result.data?.role || 'savanoris'
   } catch {
     return 'mentorius'
   }
