@@ -31,30 +31,30 @@ export default function App() {
     </div>
   )
 
+  if (role === 'savanoris') {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<PrivateRoute><SavanoriasLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="/renginiai" replace />} />
+          <Route path="renginiai" element={<SavanoriasRenginiai />} />
+          <Route path="leaderboard" element={<SavanoriasLeaderboard />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/renginiai" replace />} />
+      </Routes>
+    )
+  }
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={
-        <PrivateRoute>
-          {role === 'savanoris' ? <SavanoriasLayout /> : <Layout />}
-        </PrivateRoute>
-      }>
-        {role === 'savanoris' ? (
-          <>
-            <Route index element={<Navigate to="/renginiai" replace />} />
-            <Route path="renginiai" element={<SavanoriasRenginiai />} />
-            <Route path="leaderboard" element={<SavanoriasLeaderboard />} />
-          </>
-        ) : (
-          <>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="savanoriai" element={<SavanoriaiPage />} />
-            <Route path="savanorystes" element={<SavanorystesPage />} />
-            <Route path="renginiai" element={<RenginiaPage />} />
-            <Route path="statistika" element={<StatistikaPage />} />
-          </>
-        )}
+      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="savanoriai" element={<SavanoriaiPage />} />
+        <Route path="savanorystes" element={<SavanorystesPage />} />
+        <Route path="renginiai" element={<RenginiaPage />} />
+        <Route path="statistika" element={<StatistikaPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
