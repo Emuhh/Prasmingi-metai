@@ -51,7 +51,7 @@ export default function SavanoriasLeaderboard() {
       setLoading(false)
     }
     load()
-  }, [user])
+  },  [user?.id])
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
