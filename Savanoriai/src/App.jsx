@@ -11,20 +11,19 @@ import StatistikaPage from './pages/StatistikaPage'
 import SavanoriasRenginiai from './pages/SavanoriasRenginiai'
 import SavanoriasLeaderboard from './pages/SavanoriasLeaderboard'
 
-function PrivateRoute({ children, requireRole }) {
-  const { user, role, loading } = useAuth()
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth()
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
   if (!user) return <Navigate to="/login" replace />
-  if (requireRole && role !== requireRole) return <Navigate to="/" replace />
   return children
 }
 
 export default function App() {
-  const { role, loading } = useAuth()
+  const { role, loading, user } = useAuth()
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -37,7 +36,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
 
       {/* Mentoriaus aplinka */}
-      <Route path="/" element={<PrivateRoute requireRole="mentorius"><Layout /></PrivateRoute>}>
+      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="savanoriai" element={<SavanoriaiPage />} />
@@ -47,7 +46,7 @@ export default function App() {
       </Route>
 
       {/* Savanorio aplinka */}
-      <Route path="/savanoris" element={<PrivateRoute requireRole="savanoris"><SavanoriasLayout /></PrivateRoute>}>
+      <Route path="/savanoris" element={<PrivateRoute><SavanoriasLayout /></PrivateRoute>}>
         <Route index element={<Navigate to="/savanoris/renginiai" replace />} />
         <Route path="renginiai" element={<SavanoriasRenginiai />} />
         <Route path="leaderboard" element={<SavanoriasLeaderboard />} />
