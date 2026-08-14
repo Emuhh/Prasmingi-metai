@@ -11,7 +11,7 @@ async function fetchRoleWithTimeout(userId) {
     ])
     return result.data?.role || 'savanoris'
   } catch {
-    return 'mentorius'
+    return 'savanoris'
   }
 }
 
