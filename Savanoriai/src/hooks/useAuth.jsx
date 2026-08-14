@@ -9,29 +9,51 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const fetchRole = async (userId) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('role, savanoris_id')
-      .eq('id', userId)
-      .single()
-    setRole(data?.role || 'savanoris')
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role, savanoris_id')
+        .eq('id', userId)
+        .single()
+      
+      if (error) {
+        console.error('Role fetch error:', error)
+        setRole('mentorius') // default
+        return
+      }
+      setRole(data?.role || 'mentorius')
+    } catch (e) {
+      console.error('Role fetch failed:', e)
+      setRole('mentorius')
+    }
   }
 
   useEffect(() => {
+    let mounted = true
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return
       setUser(session?.user ?? null)
-      if (session?.user) await fetchRole(session.user.id)
+      if (session?.user) {
+        await fetchRole(session.user.id)
+      }
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return
       setUser(session?.user ?? null)
-      if (session?.user) await fetchRole(session.user.id)
-      else setRole(null)
+      if (session?.user) {
+        await fetchRole(session.user.id)
+      } else {
+        setRole(null)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = (email, password) =>
