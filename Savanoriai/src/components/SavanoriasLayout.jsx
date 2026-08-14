@@ -3,8 +3,8 @@ import { useAuth } from '../hooks/useAuth'
 import { Calendar, Trophy, LogOut, Heart } from 'lucide-react'
 
 const navItems = [
-  { to: '/savanoris/renginiai', icon: Calendar, label: 'Renginiai' },
-  { to: '/savanoris/leaderboard', icon: Trophy, label: 'Lyderiai' },
+  { to: '/renginiai', icon: Calendar, label: 'Renginiai' },
+  { to: '/leaderboard', icon: Trophy, label: 'Lyderiai' },
 ]
 
 export default function SavanoriasLayout() {
