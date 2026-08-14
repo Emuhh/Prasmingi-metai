@@ -3,6 +3,18 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
 
+async function fetchRoleWithTimeout(userId) {
+  try {
+    const result = await Promise.race([
+      supabase.from('profiles').select('role').eq('id', userId).single(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+    ])
+    return result.data?.role || 'mentorius'
+  } catch {
+    return 'mentorius'
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [role, setRole] = useState(null)
@@ -12,12 +24,10 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        setRole(data?.role || 'mentorius')
+        const r = await fetchRoleWithTimeout(session.user.id)
+        setRole(r)
+      } else {
+        setRole(null)
       }
       setLoading(false)
     })
@@ -25,12 +35,8 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        setRole(data?.role || 'mentorius')
+        const r = await fetchRoleWithTimeout(session.user.id)
+        setRole(r)
       } else {
         setRole(null)
       }
