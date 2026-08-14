@@ -1,28 +1,43 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
+import SavanoriasLayout from './components/SavanoriasLayout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import SavanoriaiPage from './pages/SavanoriaiPage'
 import SavanorystesPage from './pages/SavanorystesPage'
 import RenginiaPage from './pages/RenginiaPage'
 import StatistikaPage from './pages/StatistikaPage'
+import SavanoriasRenginiai from './pages/SavanoriasRenginiai'
+import SavanoriasLeaderboard from './pages/SavanoriasLeaderboard'
 
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth()
+function PrivateRoute({ children, requireRole }) {
+  const { user, role, loading } = useAuth()
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
-  return user ? children : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  if (requireRole && role !== requireRole) return <Navigate to="/" replace />
+  return children
 }
 
 export default function App() {
+  const { role, loading } = useAuth()
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+
+      {/* Mentoriaus aplinka */}
+      <Route path="/" element={<PrivateRoute requireRole="mentorius"><Layout /></PrivateRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="savanoriai" element={<SavanoriaiPage />} />
@@ -30,6 +45,15 @@ export default function App() {
         <Route path="renginiai" element={<RenginiaPage />} />
         <Route path="statistika" element={<StatistikaPage />} />
       </Route>
+
+      {/* Savanorio aplinka */}
+      <Route path="/savanoris" element={<PrivateRoute requireRole="savanoris"><SavanoriasLayout /></PrivateRoute>}>
+        <Route index element={<Navigate to="/savanoris/renginiai" replace />} />
+        <Route path="renginiai" element={<SavanoriasRenginiai />} />
+        <Route path="leaderboard" element={<SavanoriasLeaderboard />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
