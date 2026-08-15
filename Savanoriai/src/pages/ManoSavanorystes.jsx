@@ -104,7 +104,7 @@ export default function ManoSavanorystes() {
       {/* Patvirtintos savanorystės */}
       {savanorystes.length > 0 && (
         <div>
-          <h2 className="font-display font-semibold text-lg text-slate-700 mb-3">✅ Įvykdytos savanorystės</h2>
+          <h2 className="font-display font-semibold text-lg text-slate-700 mb-3">✅ savanorystės</h2>
           <div className="grid gap-3">
             {savanorystes.map(s => (
               <div key={s.id} className="card border-l-4 border-l-brand-500">
