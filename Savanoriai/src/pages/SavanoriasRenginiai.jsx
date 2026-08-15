@@ -32,7 +32,7 @@ export default function SavanoriasRenginiai() {
 
       const { data } = await supabase
         .from('renginiai')
-        .select('*, savanorystes(id)')
+        .select('*, savanorystes(id, savanoris_id)')
         .order('data', { ascending: true })
       setRenginiai(data || [])
       setLoading(false)
@@ -116,6 +116,7 @@ export default function SavanoriasRenginiai() {
               const vietosLiko = r.reik_savanoriu
                 ? Math.max(0, r.reik_savanoriu - (r.savanorystes?.length || 0))
                 : null
+              const jauUzregistruotas = r.savanorystes?.some(s => s.savanoris_id === savanorisId)
               return (
                 <div key={r.id} className="card border-l-4 border-l-brand-500">
                   <div className="flex items-start justify-between">
@@ -139,7 +140,7 @@ export default function SavanoriasRenginiai() {
                           {vietosLiko === 0 ? 'Vietos užimtos' : vietosLiko === 1 ? '1 vieta liko' : vietosLiko >= 10 ? `${vietosLiko} vietų liko` : `${vietosLiko} vietos liko`}
                         </span>
                       )}
-                      {!rez && (
+                      {!rez && !jauUzregistruotas && (
                         <button
                           onClick={() => registruotis(r.id)}
                           disabled={isLoading || !savanorisId}
