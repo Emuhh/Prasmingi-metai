@@ -136,7 +136,7 @@ export default function SavanoriasRenginiai() {
                       <StatusBadge renginysId={r.id} />
                       {vietosLiko !== null && (
                         <span className={`text-xs font-medium ${vietosLiko === 0 ? 'text-red-500' : 'text-slate-500'}`}>
-                          {vietosLiko === 0 ? 'Vietos užimtos' : `${vietosLiko} vietos liko`}
+                          {vietosLiko === 0 ? 'Vietos užimtos' : vietosLiko === 1 ? '1 vieta liko' : `${vietosLiko} vietos liko`}
                         </span>
                       )}
                       {!rez && (
