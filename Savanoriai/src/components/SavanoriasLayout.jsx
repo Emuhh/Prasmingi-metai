@@ -1,9 +1,10 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { Calendar, Trophy, LogOut, Heart } from 'lucide-react'
+import { Calendar, Trophy, LogOut, Heart, ClipboardList } from 'lucide-react'
 
 const navItems = [
   { to: '/renginiai', icon: Calendar, label: 'Renginiai' },
+  { to: '/mano', icon: ClipboardList, label: 'Mano' },
   { to: '/leaderboard', icon: Trophy, label: 'Lyderiai' },
 ]
 

@@ -11,6 +11,7 @@ import StatistikaPage from './pages/StatistikaPage'
 import RezervacijosPage from './pages/RezervacijosPage'
 import SavanoriasRenginiai from './pages/SavanoriasRenginiai'
 import SavanoriasLeaderboard from './pages/SavanoriasLeaderboard'
+import ManoSavanorystes from './pages/ManoSavanorystes'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -40,6 +41,7 @@ export default function App() {
           <Route index element={<Navigate to="/renginiai" replace />} />
           <Route path="renginiai" element={<SavanoriasRenginiai />} />
           <Route path="leaderboard" element={<SavanoriasLeaderboard />} />
+          <Route path="mano" element={<ManoSavanorystes />} />
         </Route>
         <Route path="*" element={<Navigate to="/renginiai" replace />} />
       </Routes>
