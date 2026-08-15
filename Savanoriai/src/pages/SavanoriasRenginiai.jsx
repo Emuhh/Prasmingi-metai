@@ -10,6 +10,8 @@ export default function SavanoriasRenginiai() {
   const [savanorisId, setSavanorisId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState({})
+  const [naujiPranesimai, setNaujiPranesimai] = useState([])
+  const [rodomiPranesimai, setRodomiPranesimai] = useState(true)
 
   useEffect(() => {
     async function load() {
@@ -23,11 +25,15 @@ export default function SavanoriasRenginiai() {
         setSavanorisId(profile.savanoris_id)
         const { data: rez } = await supabase
           .from('rezervacijos')
-          .select('*')
+          .select('*, renginiai(pavadinimas, data, laikas)')
           .eq('savanoris_id', profile.savanoris_id)
         const rezMap = {}
         rez?.forEach(r => { rezMap[r.renginys_id] = r })
         setRezervacijos(rezMap)
+
+        // Patikrinti naujai patvirtintas
+        const naujos = rez?.filter(r => r.statusas === 'patvirtinta' && !localStorage.getItem(`seen_${r.id}`)) || []
+        setNaujiPranesimai(naujos)
       }
 
       const { data } = await supabase
@@ -70,6 +76,11 @@ export default function SavanoriasRenginiai() {
     setRegistering(prev => ({ ...prev, [renginysId]: false }))
   }
 
+  const uzdarytiPranesimai = () => {
+    naujiPranesimai.forEach(r => localStorage.setItem(`seen_${r.id}`, 'true'))
+    setRodomiPranesimai(false)
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -101,6 +112,36 @@ export default function SavanoriasRenginiai() {
 
   return (
     <div>
+      {/* Pranešimų langelis */}
+      {rodomiPranesimai && naujiPranesimai.length > 0 && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="font-display font-bold text-xl text-slate-800">Sveikiname! 🎉</h2>
+              <p className="text-slate-500 mt-1">Tavo registracija patvirtinta!</p>
+            </div>
+            <div className="space-y-2 mb-6">
+              {naujiPranesimai.map(r => (
+                <div key={r.id} className="bg-green-50 rounded-xl px-4 py-3">
+                  <p className="font-medium text-green-800">{r.renginiai?.pavadinimas}</p>
+                  {r.renginiai?.data && (
+                    <p className="text-sm text-green-600">
+                      {r.renginiai.data}{r.renginiai?.laikas ? ` · ${r.renginiai.laikas}` : ''}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button onClick={uzdarytiPranesimai} className="btn-primary w-full justify-center">
+              Puiku, ačiū!
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl text-slate-800">Renginiai</h1>
         <p className="text-slate-500 mt-1">Registruokis į savanorystę</p>
