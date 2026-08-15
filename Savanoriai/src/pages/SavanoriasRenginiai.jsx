@@ -13,7 +13,6 @@ export default function SavanoriasRenginiai() {
 
   useEffect(() => {
     async function load() {
-      // Gauti savanoris_id
       const { data: profile } = await supabase
         .from('profiles')
         .select('savanoris_id')
@@ -22,19 +21,15 @@ export default function SavanoriasRenginiai() {
 
       if (profile?.savanoris_id) {
         setSavanorisId(profile.savanoris_id)
-
-        // Gauti rezervacijas
         const { data: rez } = await supabase
           .from('rezervacijos')
           .select('*')
           .eq('savanoris_id', profile.savanoris_id)
-
         const rezMap = {}
         rez?.forEach(r => { rezMap[r.renginys_id] = r })
         setRezervacijos(rezMap)
       }
 
-      // Gauti renginius
       const { data } = await supabase
         .from('renginiai')
         .select('*, savanorystes(id)')
@@ -48,13 +43,11 @@ export default function SavanoriasRenginiai() {
   const registruotis = async (renginysId) => {
     if (!savanorisId) return
     setRegistering(prev => ({ ...prev, [renginysId]: true }))
-
     const { data, error } = await supabase
       .from('rezervacijos')
       .insert({ savanoris_id: savanorisId, renginys_id: renginysId, statusas: 'laukiama' })
       .select()
       .single()
-
     if (!error && data) {
       setRezervacijos(prev => ({ ...prev, [renginysId]: data }))
     }
@@ -64,13 +57,11 @@ export default function SavanoriasRenginiai() {
   const atšaukti = async (renginysId) => {
     if (!savanorisId) return
     setRegistering(prev => ({ ...prev, [renginysId]: true }))
-
     await supabase
       .from('rezervacijos')
       .delete()
       .eq('savanoris_id', savanorisId)
       .eq('renginys_id', renginysId)
-
     setRezervacijos(prev => {
       const updated = { ...prev }
       delete updated[renginysId]
@@ -122,6 +113,9 @@ export default function SavanoriasRenginiai() {
             {busimi.map(r => {
               const rez = rezervacijos[r.id]
               const isLoading = registering[r.id]
+              const vietosLiko = r.reik_savanoriu
+                ? Math.max(0, r.reik_savanoriu - (r.savanorystes?.length || 0))
+                : null
               return (
                 <div key={r.id} className="card border-l-4 border-l-brand-500">
                   <div className="flex items-start justify-between">
@@ -140,6 +134,11 @@ export default function SavanoriasRenginiai() {
                     </div>
                     <div className="ml-4 flex flex-col items-end gap-2">
                       <StatusBadge renginysId={r.id} />
+                      {vietosLiko !== null && (
+                        <span className={`text-xs font-medium ${vietosLiko === 0 ? 'text-red-500' : 'text-slate-500'}`}>
+                          {vietosLiko === 0 ? 'Vietos užimtos' : `${vietosLiko} vietos liko`}
+                        </span>
+                      )}
                       {!rez && (
                         <button
                           onClick={() => registruotis(r.id)}
