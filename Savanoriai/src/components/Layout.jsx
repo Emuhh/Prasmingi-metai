@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import {
   LayoutDashboard, Users, ClipboardList, Calendar,
-  BarChart2, LogOut, Heart
+  BarChart2, LogOut, Heart, ChevronRight, BookCheck
 } from 'lucide-react'
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/savanoriai',   icon: Users,            label: 'Savanoriai' },
   { to: '/savanorystes', icon: ClipboardList,    label: 'Savanorystės' },
   { to: '/renginiai',    icon: Calendar,         label: 'Renginiai' },
+  { to: '/rezervacijos', icon: BookCheck,        label: 'Rezervacijos' },
   { to: '/statistika',   icon: BarChart2,        label: 'Statistika' },
 ]
 
