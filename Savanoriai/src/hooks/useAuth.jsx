@@ -9,17 +9,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Pirma patikrink sesiją
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      // Jei klaida arba nėra sesijos - iš karto rodyti login
-      if (error || !session) {
-        await supabase.auth.signOut()
+    // Timeout - po 5 sek visada sustabdo loading
+    const timeout = setTimeout(() => {
+      setLoading(false)
+    }, 5000)
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(timeout)
+      if (!session) {
         setUser(null)
         setRole(null)
         setLoading(false)
         return
       }
-
       setUser(session.user)
       try {
         const { data } = await supabase
@@ -33,7 +35,7 @@ export function AuthProvider({ children }) {
       }
       setLoading(false)
     }).catch(() => {
-      // Bet kokia klaida - rodyti login
+      clearTimeout(timeout)
       setUser(null)
       setRole(null)
       setLoading(false)
@@ -60,7 +62,10 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = (email, password) =>
