@@ -9,8 +9,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session) {
+    // Pirma patikrink sesiją
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      // Jei klaida arba nėra sesijos - iš karto rodyti login
+      if (error || !session) {
+        await supabase.auth.signOut()
         setUser(null)
         setRole(null)
         setLoading(false)
@@ -18,7 +21,6 @@ export function AuthProvider({ children }) {
       }
 
       setUser(session.user)
-
       try {
         const { data } = await supabase
           .from('profiles')
@@ -29,7 +31,32 @@ export function AuthProvider({ children }) {
       } catch {
         setRole('savanoris')
       }
+      setLoading(false)
+    }).catch(() => {
+      // Bet kokia klaida - rodyti login
+      setUser(null)
+      setRole(null)
+      setLoading(false)
+    })
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!session) {
+        setUser(null)
+        setRole(null)
+        setLoading(false)
+        return
+      }
+      setUser(session.user)
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+        setRole(data?.role || 'savanoris')
+      } catch {
+        setRole('savanoris')
+      }
       setLoading(false)
     })
 
