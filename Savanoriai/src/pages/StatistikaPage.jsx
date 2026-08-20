@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+
+const COLORS = ['#16a34a','#2563eb','#d97706','#9333ea','#dc2626','#0891b2','#be185d','#7c3aed']
 
 export default function StatistikaPage() {
   const [data, setData] = useState({ topSavanoriai: [], byMonth: [], byMentorius: [], byOrg: [], totals: {} })
@@ -17,7 +19,7 @@ export default function StatistikaPage() {
 
       if (!savs) { setLoading(false); return }
 
-      // Top savanoriai
+      // Top savanoriai - rikiuojami pagal savanorystes, o lygiose - pagal valandas
       const savMap = {}
       savs.forEach(s => {
         const key = s.savanoris_id
@@ -25,7 +27,11 @@ export default function StatistikaPage() {
         savMap[key].savanorystes += 1
         savMap[key].valandos += s.valandos || 0
       })
-      const topSavanoriai = Object.values(savMap).sort((a, b) => b.savanorystes - a.savanorystes).slice(0, 10)
+      const topSavanoriai = Object.values(savMap).sort((a, b) =>
+        b.savanorystes !== a.savanorystes
+          ? b.savanorystes - a.savanorystes
+          : b.valandos - a.valandos
+      ).slice(0, 10)
 
       // Pagal mėnesį
       const monthMap = {}
@@ -52,8 +58,6 @@ export default function StatistikaPage() {
       const orgMap = {}
       renginiai?.forEach(r => {
         const org = r.vieta || 'Nenurodyta'
-        const metai = r.data?.slice(0, 4)
-        const menuo = r.data?.slice(0, 7)
         if (!orgMap[org]) orgMap[org] = {
           name: org,
           renginiai: 0,
@@ -67,7 +71,8 @@ export default function StatistikaPage() {
         const savs_org = r.savanorystes || []
         orgMap[org].savanorystes += savs_org.length
         orgMap[org].valandos += savs_org.reduce((s, x) => s + (x.valandos || 0), 0)
-        if (menuo) {
+        if (r.data) {
+          const menuo = r.data.slice(0, 7)
           if (!orgMap[org].byMonth[menuo]) orgMap[org].byMonth[menuo] = { savanorystes: 0, valandos: 0, reik_savanoriu: 0 }
           orgMap[org].byMonth[menuo].savanorystes += savs_org.length
           orgMap[org].byMonth[menuo].valandos += savs_org.reduce((s, x) => s + (x.valandos || 0), 0)
@@ -187,57 +192,84 @@ export default function StatistikaPage() {
         <div className="space-y-6">
           {data.byOrg.length === 0 ? (
             <div className="card text-center text-slate-400 py-12">Duomenų nėra</div>
-          ) : data.byOrg.map(org => (
-            <div key={org.name} className="card">
-              <div className="flex items-start justify-between mb-4">
-                <h2 className="font-display font-semibold text-lg text-slate-800">{org.name}</h2>
-                <div className="flex gap-4 text-right">
-                  <div>
-                    <p className="text-xs text-slate-400">Renginiai</p>
-                    <p className="font-bold text-slate-800">{org.renginiai}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Savanorystės</p>
-                    <p className="font-bold text-brand-600">{org.savanorystes}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Valandos</p>
-                    <p className="font-bold text-slate-800">{org.valandos}h</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Reikėjo sav.</p>
-                    <p className="font-bold text-slate-800">{org.reik_savanoriu_metai}</p>
+          ) : (
+            <>
+              {/* Skritulinė diagrama */}
+              <div className="card">
+                <h2 className="font-display font-semibold text-lg text-slate-800 mb-4">Savanorystės pagal organizaciją</h2>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="40%" height={220}>
+                    <PieChart>
+                      <Pie data={data.byOrg} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="savanorystes" paddingAngle={3}>
+                        {data.byOrg.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} formatter={(v) => [v, 'Savanorystės']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-2">
+                    {data.byOrg.map((org, i) => (
+                      <div key={org.name} className="flex items-center gap-2 text-sm">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                        <span className="text-slate-600 truncate flex-1">{org.name}</span>
+                        <span className="font-medium text-slate-800">{org.savanorystes} sav.</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Mėnesinė lentelė */}
-              {Object.keys(org.byMonth).length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-100">
-                        <th className="text-left font-medium text-slate-500 py-2">Mėnesis</th>
-                        <th className="text-right font-medium text-slate-500 py-2">Savanorystės</th>
-                        <th className="text-right font-medium text-slate-500 py-2">Valandos</th>
-                        <th className="text-right font-medium text-slate-500 py-2">Reikėjo sav.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(org.byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([month, stats]) => (
-                        <tr key={month} className="border-b border-slate-50 hover:bg-slate-50">
-                          <td className="py-2 text-slate-600">{month}</td>
-                          <td className="py-2 text-right font-medium text-brand-600">{stats.savanorystes}</td>
-                          <td className="py-2 text-right text-slate-600">{stats.valandos}h</td>
-                          <td className="py-2 text-right text-slate-600">{stats.reik_savanoriu}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Kiekvienos organizacijos detalės */}
+              {data.byOrg.map(org => (
+                <div key={org.name} className="card">
+                  <div className="flex items-start justify-between mb-4">
+                    <h2 className="font-display font-semibold text-lg text-slate-800">{org.name}</h2>
+                    <div className="flex gap-4 text-right">
+                      <div>
+                        <p className="text-xs text-slate-400">Renginiai</p>
+                        <p className="font-bold text-slate-800">{org.renginiai}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Savanorystės</p>
+                        <p className="font-bold text-brand-600">{org.savanorystes}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Valandos</p>
+                        <p className="font-bold text-slate-800">{org.valandos}h</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Reikėjo sav.</p>
+                        <p className="font-bold text-slate-800">{org.reik_savanoriu_metai}</p>
+                      </div>
+                    </div>
+                  </div>
+                  {Object.keys(org.byMonth).length > 0 && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-100">
+                            <th className="text-left font-medium text-slate-500 py-2">Mėnesis</th>
+                            <th className="text-right font-medium text-slate-500 py-2">Savanorystės</th>
+                            <th className="text-right font-medium text-slate-500 py-2">Valandos</th>
+                            <th className="text-right font-medium text-slate-500 py-2">Reikėjo sav.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(org.byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([month, stats]) => (
+                            <tr key={month} className="border-b border-slate-50 hover:bg-slate-50">
+                              <td className="py-2 text-slate-600">{month}</td>
+                              <td className="py-2 text-right font-medium text-brand-600">{stats.savanorystes}</td>
+                              <td className="py-2 text-right text-slate-600">{stats.valandos}h</td>
+                              <td className="py-2 text-right text-slate-600">{stats.reik_savanoriu}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
       )}
 
