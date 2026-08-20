@@ -14,30 +14,13 @@ import SavanoriasLeaderboard from './pages/SavanoriasLeaderboard'
 import ManoSavanorystes from './pages/ManoSavanorystes'
 
 function PrivateRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
   return children
 }
 
 export default function App() {
-  const { role, loading } = useAuth()
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  if (role === null) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  const { role, user } = useAuth()
 
   if (role === 'savanoris') {
     return (
