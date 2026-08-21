@@ -247,7 +247,7 @@ export default function StatistikaPage() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-slate-100">
-                            <th className="text-left font-medium text-slate-500 py-2">data</th>
+                            <th className="text-left font-medium text-slate-500 py-2">Data</th>
                             <th className="text-right font-medium text-slate-500 py-2">Savanorystės</th>
                             <th className="text-right font-medium text-slate-500 py-2">Valandos</th>
                             <th className="text-right font-medium text-slate-500 py-2">Reikėjo sav.</th>
