@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import {
   LayoutDashboard, Users, ClipboardList, Calendar,
-  BarChart2, LogOut, ChevronRight, BookCheck
+  BarChart2, LogOut, Heart, ChevronRight, BookCheck
 } from 'lucide-react'
 
 const navItems = [
@@ -29,20 +29,7 @@ export default function Layout() {
       <aside className="hidden md:flex w-64 bg-white border-r border-slate-100 flex-col fixed inset-y-0 z-10">
         <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-100">
           <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
-            <svg viewBox="0 0 100 130" width="20" height="20" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M50,5 L58,25 L50,35 L42,25 Z"/>
-              <path d="M50,35 C50,35 50,55 50,65"/>
-              <path d="M50,45 C35,38 15,40 8,55 C3,67 12,78 25,72 C35,68 44,58 50,45"/>
-              <path d="M50,45 C65,38 85,40 92,55 C97,67 88,78 75,72 C65,68 56,58 50,45"/>
-              <path d="M50,45 C42,50 35,62 32,75"/>
-              <path d="M50,45 C58,50 65,62 68,75"/>
-              <rect x="35" y="75" width="30" height="5" rx="2"/>
-              <rect x="37" y="82" width="26" height="5" rx="2"/>
-              <path d="M43,87 C38,90 30,98 32,108 C33,115 40,112 44,105"/>
-              <path d="M57,87 C62,90 70,98 68,108 C67,115 60,112 56,105"/>
-              <path d="M44,87 L50,115 L56,87"/>
-              <path d="M47,115 L44,125 L50,120 L56,125 L53,115"/>
-            </svg>
+            <Heart className="w-5 h-5 text-white" />
           </div>
           <span className="font-display font-bold text-xl text-slate-800">Savanoriai</span>
         </div>
