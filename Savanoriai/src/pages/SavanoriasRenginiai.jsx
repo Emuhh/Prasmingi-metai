@@ -51,7 +51,7 @@ export default function SavanoriasRenginiai() {
     setRegistering(prev => ({ ...prev, [renginysId]: true }))
     const { data, error } = await supabase
       .from('rezervacijos')
-      .insert({ savanoris_id: savanorisId, renginys_id: renginysId, statusas: 'laukiama' })
+      .insert({ savanoris_id: savanorisId, renginys_id: renginysId, statusas: 'patvirtinta' })
       .select()
       .single()
     if (!error && data) {
