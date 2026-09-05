@@ -111,7 +111,7 @@ export default function RenginiaPage() {
                 </div>
                 <div>
                   <label className="label">Laikas</label>
-                  <input className="input" value={form.laikas} onChange={e => setForm({ ...form, laikas: e.target.value })} placeholder="14:00-16:00" />
+                  <input className="input" type="time" value={form.laikas} onChange={e => setForm({ ...form, laikas: e.target.value })} placeholder="14:00" />
                 </div>
               </div>
               <div>
