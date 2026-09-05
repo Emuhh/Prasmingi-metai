@@ -12,6 +12,12 @@ export default function SavanoriasRenginiai() {
   const [registering, setRegistering] = useState({})
   const [naujiPranesimai, setNaujiPranesimai] = useState([])
   const [rodomiPranesimai, setRodomiPranesimai] = useState(true)
+  const [dabar, setDabar] = useState(new Date())
+
+  useEffect(() => {
+    const interval = setInterval(() => setDabar(new Date()), 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -30,8 +36,6 @@ export default function SavanoriasRenginiai() {
         const rezMap = {}
         rez?.forEach(r => { rezMap[r.renginys_id] = r })
         setRezervacijos(rezMap)
-
-        // Patikrinti naujai patvirtintas
         const naujos = rez?.filter(r => r.statusas === 'patvirtinta' && !localStorage.getItem(`seen_${r.id}`)) || []
         setNaujiPranesimai(naujos)
       }
@@ -81,6 +85,18 @@ export default function SavanoriasRenginiai() {
     setRodomiPranesimai(false)
   }
 
+  const registracijaAktyvt = (r) => {
+    if (!r.registracija_nuo) return true
+    return dabar >= new Date(r.registracija_nuo)
+  }
+
+  const formatRegistracijaNuo = (r) => {
+    if (!r.registracija_nuo) return null
+    return new Date(r.registracija_nuo).toLocaleString('lt-LT', {
+      month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    })
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -95,12 +111,7 @@ export default function SavanoriasRenginiai() {
     if (!rez) return null
     if (rez.statusas === 'patvirtinta') return (
       <span className="badge bg-green-50 text-green-700 flex items-center gap-1">
-        <Check size={12} /> Patvirtinta
-      </span>
-    )
-    if (rez.statusas === 'atmesta') return (
-      <span className="badge bg-red-50 text-red-700 flex items-center gap-1">
-        <X size={12} /> Atmesta
+        <Check size={12} /> Užsiregistravęs
       </span>
     )
     return (
@@ -112,7 +123,6 @@ export default function SavanoriasRenginiai() {
 
   return (
     <div>
-      {/* Pranešimų langelis */}
       {rodomiPranesimai && naujiPranesimai.length > 0 && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
@@ -158,6 +168,9 @@ export default function SavanoriasRenginiai() {
                 ? Math.max(0, r.reik_savanoriu - (r.savanorystes?.length || 0))
                 : null
               const jauUzregistruotas = r.savanorystes?.some(s => s.savanoris_id === savanorisId)
+              const regAktyvt = registracijaAktyvt(r)
+              const regNuoText = formatRegistracijaNuo(r)
+
               return (
                 <div key={r.id} className="card border-l-4 border-l-brand-500">
                   <div className="flex items-start justify-between">
@@ -172,6 +185,12 @@ export default function SavanoriasRenginiai() {
                         {r.vieta && <span className="flex items-center gap-1"><MapPin size={13} /> {r.vieta}</span>}
                         {r.mentorius && <span className="flex items-center gap-1"><User size={13} /> {r.mentorius}</span>}
                       </div>
+                      {!regAktyvt && regNuoText && (
+                        <div className="mt-2 flex items-center gap-1.5 text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5 w-fit">
+                          <Clock size={13} />
+                          Registracija atsidaro {regNuoText}
+                        </div>
+                      )}
                       {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
                     </div>
                     <div className="ml-4 flex flex-col items-end gap-2">
@@ -181,7 +200,7 @@ export default function SavanoriasRenginiai() {
                           {vietosLiko === 0 ? 'Vietos užimtos' : vietosLiko === 1 ? '1 vieta liko' : vietosLiko >= 10 ? `${vietosLiko} vietų liko` : `${vietosLiko} vietos liko`}
                         </span>
                       )}
-                      {!rez && !jauUzregistruotas && (
+                      {!rez && !jauUzregistruotas && regAktyvt && (
                         <button
                           onClick={() => registruotis(r.id)}
                           disabled={isLoading || !savanorisId}
@@ -190,7 +209,12 @@ export default function SavanoriasRenginiai() {
                           {isLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : '+ Registruotis'}
                         </button>
                       )}
-                      {rez && rez.statusas === 'laukiama' && (
+                      {!rez && !jauUzregistruotas && !regAktyvt && (
+                        <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
+                          <Clock size={13} /> Uždaryta
+                        </button>
+                      )}
+                      {rez && (
                         <button
                           onClick={() => atšaukti(r.id)}
                           disabled={isLoading}
