@@ -6,7 +6,7 @@ import { Calendar, MapPin, User, Check, Clock } from 'lucide-react'
 export default function SavanoriasRenginiai() {
   const { user } = useAuth()
   const [renginiai, setRenginiai] = useState([])
-  const [rezervacijos, setRezervacijos] = useState({})
+  const [savanorystes, setSavanorystes] = useState({})
   const [savanorisId, setSavanorisId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState({})
@@ -25,22 +25,28 @@ export default function SavanoriasRenginiai() {
         .eq('id', user.id)
         .single()
 
+      let mySavId = null
       if (profile?.savanoris_id) {
-        setSavanorisId(profile.savanoris_id)
-        const { data: rez } = await supabase
-          .from('rezervacijos')
-          .select('*')
-          .eq('savanoris_id', profile.savanoris_id)
-        const rezMap = {}
-        rez?.forEach(r => { rezMap[r.renginys_id] = r })
-        setRezervacijos(rezMap)
+        mySavId = profile.savanoris_id
+        setSavanorisId(mySavId)
       }
 
       const { data } = await supabase
         .from('renginiai')
         .select('*, savanorystes(id, savanoris_id)')
         .order('data', { ascending: true })
+
       setRenginiai(data || [])
+
+      if (mySavId) {
+        const map = {}
+        ;(data || []).forEach(r => {
+          const mano = r.savanorystes?.find(s => s.savanoris_id === mySavId)
+          if (mano) map[r.id] = mano
+        })
+        setSavanorystes(map)
+      }
+
       setLoading(false)
     }
     load()
@@ -50,12 +56,17 @@ export default function SavanoriasRenginiai() {
     if (!savanorisId) return
     setRegistering(prev => ({ ...prev, [renginysId]: true }))
     const { data, error } = await supabase
-      .from('rezervacijos')
-      .insert({ savanoris_id: savanorisId, renginys_id: renginysId, statusas: 'patvirtinta' })
+      .from('savanorystes')
+      .insert({ savanoris_id: savanorisId, renginys_id: renginysId })
       .select()
       .single()
     if (!error && data) {
-      setRezervacijos(prev => ({ ...prev, [renginysId]: data }))
+      setSavanorystes(prev => ({ ...prev, [renginysId]: data }))
+      setRenginiai(prev => prev.map(r =>
+        r.id === renginysId
+          ? { ...r, savanorystes: [...(r.savanorystes || []), data] }
+          : r
+      ))
     }
     setRegistering(prev => ({ ...prev, [renginysId]: false }))
   }
@@ -64,15 +75,20 @@ export default function SavanoriasRenginiai() {
     if (!savanorisId) return
     setRegistering(prev => ({ ...prev, [renginysId]: true }))
     await supabase
-      .from('rezervacijos')
+      .from('savanorystes')
       .delete()
       .eq('savanoris_id', savanorisId)
       .eq('renginys_id', renginysId)
-    setRezervacijos(prev => {
+    setSavanorystes(prev => {
       const updated = { ...prev }
       delete updated[renginysId]
       return updated
     })
+    setRenginiai(prev => prev.map(r =>
+      r.id === renginysId
+        ? { ...r, savanorystes: (r.savanorystes || []).filter(s => s.savanoris_id !== savanorisId) }
+        : r
+    ))
     setRegistering(prev => ({ ...prev, [renginysId]: false }))
   }
 
@@ -109,12 +125,11 @@ export default function SavanoriasRenginiai() {
           <h2 className="font-display font-semibold text-lg text-slate-700 mb-3">📅 Artėjantys</h2>
           <div className="grid gap-3">
             {busimi.map(r => {
-              const rez = rezervacijos[r.id]
+              const mano = savanorystes[r.id]
               const isLoading = registering[r.id]
               const vietosLiko = r.reik_savanoriu
                 ? Math.max(0, r.reik_savanoriu - (r.savanorystes?.length || 0))
                 : null
-              const jauUzregistruotas = r.savanorystes?.some(s => s.savanoris_id === savanorisId)
               const regAktyvt = registracijaAktyvt(r)
               const regNuoText = formatRegistracijaNuo(r)
 
@@ -141,7 +156,7 @@ export default function SavanoriasRenginiai() {
                       {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
                     </div>
                     <div className="ml-4 flex flex-col items-end gap-2">
-                      {rez && (
+                      {mano && (
                         <span className="badge bg-green-50 text-green-700 flex items-center gap-1">
                           <Check size={12} /> Užsiregistravęs
                         </span>
@@ -151,7 +166,7 @@ export default function SavanoriasRenginiai() {
                           {vietosLiko === 0 ? 'Vietos užimtos' : vietosLiko === 1 ? '1 vieta liko' : vietosLiko >= 10 ? `${vietosLiko} vietų liko` : `${vietosLiko} vietos liko`}
                         </span>
                       )}
-                      {!rez && !jauUzregistruotas && regAktyvt && (
+                      {!mano && regAktyvt && (
                         <button
                           onClick={() => registruotis(r.id)}
                           disabled={isLoading || !savanorisId}
@@ -160,12 +175,12 @@ export default function SavanoriasRenginiai() {
                           {isLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : '+ Registruotis'}
                         </button>
                       )}
-                      {!rez && !jauUzregistruotas && !regAktyvt && (
+                      {!mano && !regAktyvt && (
                         <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
                           <Clock size={13} /> Uždaryta
                         </button>
                       )}
-                      {rez && (
+                      {mano && (
                         <button
                           onClick={() => atšaukti(r.id)}
                           disabled={isLoading}
