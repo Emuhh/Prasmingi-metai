@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { Calendar, MapPin, Check } from 'lucide-react'
+import { Calendar, MapPin, User, CheckCircle2 } from 'lucide-react'
 
 export default function ManoSavanorystes() {
   const { user } = useAuth()
-  const [rezervacijos, setRezervacijos] = useState([])
+  const [renginiai, setRenginiai] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -16,16 +16,23 @@ export default function ManoSavanorystes() {
         .eq('id', user.id)
         .single()
 
-      if (!profile?.savanoris_id) { setLoading(false); return }
+      if (!profile?.savanoris_id) {
+        setLoading(false)
+        return
+      }
 
-      const { data: rez } = await supabase
+      const { data, error } = await supabase
         .from('rezervacijos')
-        .select('*, renginiai(pavadinimas, data, laikas, vieta)')
+        .select('*, renginiai(*)')
         .eq('savanoris_id', profile.savanoris_id)
         .eq('statusas', 'patvirtinta')
-        .order('sukurta', { ascending: false })
 
-      setRezervacijos(rez || [])
+      if (!error) {
+        const sutvarkyti = (data || [])
+          .filter(r => r.renginiai)
+          .sort((a, b) => (b.renginiai.data || '').localeCompare(a.renginiai.data || ''))
+        setRenginiai(sutvarkyti)
+      }
       setLoading(false)
     }
     load()
@@ -41,40 +48,39 @@ export default function ManoSavanorystes() {
     <div>
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl text-slate-800">Mano registracijos</h1>
-        <p className="text-slate-500 mt-1">{rezervacijos.length} renginiai</p>
+        <p className="text-slate-500 mt-1">{renginiai.length} renginiai</p>
       </div>
 
-      {rezervacijos.length === 0 ? (
+      {renginiai.length === 0 ? (
         <div className="card text-center text-slate-400 py-16">
-          Dar nėra registracijų – registruokis į renginius!
+          Kol kas nesate užsiregistravę į jokius renginius
         </div>
       ) : (
         <div className="grid gap-3">
-          {rezervacijos.map(r => (
-            <div key={r.id} className="card border-l-4 border-l-brand-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-slate-800">{r.renginiai?.pavadinimas}</h3>
-                  <div className="flex flex-wrap gap-x-4 text-sm text-slate-500 mt-1">
-                    {r.renginiai?.data && (
-                      <span className="flex items-center gap-1">
-                        <Calendar size={13} /> {r.renginiai.data}
-                        {r.renginiai?.laikas && ` · ${r.renginiai.laikas}`}
-                      </span>
-                    )}
-                    {r.renginiai?.vieta && (
-                      <span className="flex items-center gap-1">
-                        <MapPin size={13} /> {r.renginiai.vieta}
-                      </span>
-                    )}
+          {renginiai.map(r => {
+            const rg = r.renginiai
+            return (
+              <div key={r.id} className="card border-l-4 border-l-green-500">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-800 mb-2">{rg.pavadinimas}</h3>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                      {rg.data && (
+                        <span className="flex items-center gap-1">
+                          <Calendar size={13} /> {rg.data}{rg.laikas && ` · ${rg.laikas}`}
+                        </span>
+                      )}
+                      {rg.vieta && <span className="flex items-center gap-1"><MapPin size={13} /> {rg.vieta}</span>}
+                      {rg.mentorius && <span className="flex items-center gap-1"><User size={13} /> {rg.mentorius}</span>}
+                    </div>
                   </div>
+                  <span className="badge bg-green-50 text-green-700 flex items-center gap-1 ml-4 shrink-0">
+                    <CheckCircle2 size={12} /> Užsiregistravęs
+                  </span>
                 </div>
-                <span className="badge bg-green-50 text-green-700 flex items-center gap-1">
-                  <Check size={12} /> Užsiregistravęs
-                </span>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
