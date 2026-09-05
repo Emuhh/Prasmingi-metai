@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Plus, Search, Edit2, Trash2, X, Check, Users } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, X, Check, Users, Clock } from 'lucide-react'
 
-const EMPTY_FORM = { pavadinimas: '', data: '', laikas: '', vieta: '', reik_savanoriu: '', mentorius: '', pastabos: '' }
+const EMPTY_FORM = { pavadinimas: '', data: '', laikas: '', vieta: '', reik_savanoriu: '', mentorius: '', pastabos: '', registracija_nuo_data: '', registracija_nuo_laikas: '' }
 
 export default function RenginiaPage() {
   const [renginiai, setRenginiai] = useState([])
@@ -31,6 +31,7 @@ export default function RenginiaPage() {
 
   const openAdd = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true) }
   const openEdit = (r) => {
+    const regNuo = r.registracija_nuo ? new Date(r.registracija_nuo) : null
     setForm({
       pavadinimas: r.pavadinimas,
       data: r.data || '',
@@ -38,7 +39,9 @@ export default function RenginiaPage() {
       vieta: r.vieta || '',
       reik_savanoriu: r.reik_savanoriu || '',
       mentorius: r.mentorius || '',
-      pastabos: r.pastabos || ''
+      pastabos: r.pastabos || '',
+      registracija_nuo_data: regNuo ? regNuo.toISOString().slice(0, 10) : '',
+      registracija_nuo_laikas: regNuo ? regNuo.toTimeString().slice(0, 5) : ''
     })
     setEditId(r.id)
     setShowForm(true)
@@ -47,7 +50,11 @@ export default function RenginiaPage() {
   const handleSave = async () => {
     if (!form.pavadinimas) return
     setSaving(true)
-    const payload = { ...form, reik_savanoriu: form.reik_savanoriu ? parseInt(form.reik_savanoriu) : null }
+    const registracija_nuo = form.registracija_nuo_data
+      ? new Date(`${form.registracija_nuo_data}T${form.registracija_nuo_laikas || '19:00'}:00`).toISOString()
+      : null
+    const { registracija_nuo_data, registracija_nuo_laikas, ...rest } = form
+    const payload = { ...rest, reik_savanoriu: form.reik_savanoriu ? parseInt(form.reik_savanoriu) : null, registracija_nuo }
     if (editId) {
       await supabase.from('renginiai').update(payload).eq('id', editId)
     } else {
@@ -62,6 +69,11 @@ export default function RenginiaPage() {
     if (!confirm('Ar tikrai norite ištrinti šį renginį?')) return
     await supabase.from('renginiai').delete().eq('id', id)
     await load()
+  }
+
+  const registracijaAktyvt = (r) => {
+    if (!r.registracija_nuo) return true
+    return new Date() >= new Date(r.registracija_nuo)
   }
 
   return (
@@ -79,6 +91,7 @@ export default function RenginiaPage() {
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
         <input className="input pl-10" placeholder="Ieškoti renginio..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
+
       {showForm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
@@ -117,6 +130,14 @@ export default function RenginiaPage() {
                 <label className="label">Pastabos</label>
                 <textarea className="input resize-none" rows={2} value={form.pastabos} onChange={e => setForm({ ...form, pastabos: e.target.value })} placeholder="Papildoma informacija..." />
               </div>
+              <div>
+                <label className="label">Registracija nuo (neprivaloma)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <input className="input" type="date" value={form.registracija_nuo_data} onChange={e => setForm({ ...form, registracija_nuo_data: e.target.value })} />
+                  <input className="input" type="time" value={form.registracija_nuo_laikas} onChange={e => setForm({ ...form, registracija_nuo_laikas: e.target.value })} placeholder="19:00" />
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Jei nenurodyta – registracija prieinama iš karto</p>
+              </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowForm(false)} className="btn-secondary flex-1 justify-center">Atšaukti</button>
@@ -127,6 +148,7 @@ export default function RenginiaPage() {
           </div>
         </div>
       )}
+
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -139,6 +161,7 @@ export default function RenginiaPage() {
             const registered = r.savanorystes?.length || 0
             const needed = r.reik_savanoriu || 0
             const full = needed > 0 && registered >= needed
+            const regAktyvt = registracijaAktyvt(r)
             return (
               <div key={r.id} className="card hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
@@ -146,11 +169,21 @@ export default function RenginiaPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-medium text-slate-800">{r.pavadinimas}</h3>
                       {full && <span className="badge bg-green-50 text-green-700">Pilnas</span>}
+                      {!regAktyvt && (
+                        <span className="badge bg-amber-50 text-amber-700 flex items-center gap-1">
+                          <Clock size={11} /> Registracija uždaryta
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-slate-500">
                       {r.data && <span>📅 {r.data}{r.laikas ? ` · ${r.laikas}` : ''}</span>}
                       {r.vieta && <span>📍 {r.vieta}</span>}
                       {r.mentorius && <span>👤 {r.mentorius}</span>}
+                      {r.registracija_nuo && !regAktyvt && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} /> Registracija nuo: {new Date(r.registracija_nuo).toLocaleString('lt-LT')}
+                        </span>
+                      )}
                     </div>
                     {r.pastabos && <p className="text-sm text-slate-400 mt-1">{r.pastabos}</p>}
                   </div>
