@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { Calendar, MapPin, User, Check, Clock, X } from 'lucide-react'
+import { Calendar, MapPin, User, Check, Clock } from 'lucide-react'
 
 export default function SavanoriasRenginiai() {
   const { user } = useAuth()
@@ -10,8 +10,6 @@ export default function SavanoriasRenginiai() {
   const [savanorisId, setSavanorisId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState({})
-  const [naujiPranesimai, setNaujiPranesimai] = useState([])
-  const [rodomiPranesimai, setRodomiPranesimai] = useState(true)
   const [dabar, setDabar] = useState(new Date())
 
   useEffect(() => {
@@ -31,13 +29,11 @@ export default function SavanoriasRenginiai() {
         setSavanorisId(profile.savanoris_id)
         const { data: rez } = await supabase
           .from('rezervacijos')
-          .select('*, renginiai(pavadinimas, data, laikas)')
+          .select('*')
           .eq('savanoris_id', profile.savanoris_id)
         const rezMap = {}
         rez?.forEach(r => { rezMap[r.renginys_id] = r })
         setRezervacijos(rezMap)
-        const naujos = rez?.filter(r => r.statusas === 'patvirtinta' && !localStorage.getItem(`seen_${r.id}`)) || []
-        setNaujiPranesimai(naujos)
       }
 
       const { data } = await supabase
@@ -80,11 +76,6 @@ export default function SavanoriasRenginiai() {
     setRegistering(prev => ({ ...prev, [renginysId]: false }))
   }
 
-  const uzdarytiPranesimai = () => {
-    naujiPranesimai.forEach(r => localStorage.setItem(`seen_${r.id}`, 'true'))
-    setRodomiPranesimai(false)
-  }
-
   const registracijaAktyvt = (r) => {
     if (!r.registracija_nuo) return true
     return dabar >= new Date(r.registracija_nuo)
@@ -106,52 +97,8 @@ export default function SavanoriasRenginiai() {
   const busimi = renginiai.filter(r => r.data && r.data >= new Date().toISOString().slice(0, 10))
   const praeję = renginiai.filter(r => !r.data || r.data < new Date().toISOString().slice(0, 10))
 
-  const StatusBadge = ({ renginysId }) => {
-    const rez = rezervacijos[renginysId]
-    if (!rez) return null
-    if (rez.statusas === 'patvirtinta') return (
-      <span className="badge bg-green-50 text-green-700 flex items-center gap-1">
-        <Check size={12} /> Užsiregistravęs
-      </span>
-    )
-    return (
-      <span className="badge bg-amber-50 text-amber-700 flex items-center gap-1">
-        <Clock size={12} /> Laukiama
-      </span>
-    )
-  }
-
   return (
     <div>
-      {rodomiPranesimai && naujiPranesimai.length > 0 && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Check className="w-8 h-8 text-green-600" />
-              </div>
-              <h2 className="font-display font-bold text-xl text-slate-800">Sveikiname! 🎉</h2>
-              <p className="text-slate-500 mt-1">Tavo registracija patvirtinta!</p>
-            </div>
-            <div className="space-y-2 mb-6">
-              {naujiPranesimai.map(r => (
-                <div key={r.id} className="bg-green-50 rounded-xl px-4 py-3">
-                  <p className="font-medium text-green-800">{r.renginiai?.pavadinimas}</p>
-                  {r.renginiai?.data && (
-                    <p className="text-sm text-green-600">
-                      {r.renginiai.data}{r.renginiai?.laikas ? ` · ${r.renginiai.laikas}` : ''}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-            <button onClick={uzdarytiPranesimai} className="btn-primary w-full justify-center">
-              Puiku, ačiū!
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl text-slate-800">Renginiai</h1>
         <p className="text-slate-500 mt-1">Registruokis į savanorystę</p>
@@ -194,7 +141,11 @@ export default function SavanoriasRenginiai() {
                       {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
                     </div>
                     <div className="ml-4 flex flex-col items-end gap-2">
-                      <StatusBadge renginysId={r.id} />
+                      {rez && (
+                        <span className="badge bg-green-50 text-green-700 flex items-center gap-1">
+                          <Check size={12} /> Užsiregistravęs
+                        </span>
+                      )}
                       {vietosLiko !== null && (
                         <span className={`text-xs font-medium ${vietosLiko === 0 ? 'text-red-500' : 'text-slate-500'}`}>
                           {vietosLiko === 0 ? 'Vietos užimtos' : vietosLiko === 1 ? '1 vieta liko' : vietosLiko >= 10 ? `${vietosLiko} vietų liko` : `${vietosLiko} vietos liko`}
