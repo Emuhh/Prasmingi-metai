@@ -5,7 +5,7 @@ import { Calendar, MapPin, User, CheckCircle2 } from 'lucide-react'
 
 export default function ManoSavanorystes() {
   const { user } = useAuth()
-  const [renginiai, setRenginiai] = useState([])
+  const [savanorystes, setSavanorystes] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,16 +22,15 @@ export default function ManoSavanorystes() {
       }
 
       const { data, error } = await supabase
-        .from('rezervacijos')
+        .from('savanorystes')
         .select('*, renginiai(*)')
         .eq('savanoris_id', profile.savanoris_id)
-        .eq('statusas', 'patvirtinta')
 
       if (!error) {
-        const sutvarkyti = (data || [])
-          .filter(r => r.renginiai)
+        const sutvarkytos = (data || [])
+          .filter(s => s.renginiai)
           .sort((a, b) => (b.renginiai.data || '').localeCompare(a.renginiai.data || ''))
-        setRenginiai(sutvarkyti)
+        setSavanorystes(sutvarkytos)
       }
       setLoading(false)
     }
@@ -47,20 +46,20 @@ export default function ManoSavanorystes() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-display font-bold text-3xl text-slate-800">Mano registracijos</h1>
-        <p className="text-slate-500 mt-1">{renginiai.length} renginiai</p>
+        <h1 className="font-display font-bold text-3xl text-slate-800">Mano savanorystės</h1>
+        <p className="text-slate-500 mt-1">{savanorystes.length} savanorystės</p>
       </div>
 
-      {renginiai.length === 0 ? (
+      {savanorystes.length === 0 ? (
         <div className="card text-center text-slate-400 py-16">
-          Kol kas nesate užsiregistravę į jokius renginius
+          Kol kas nesate savanoriavę jokiuose renginiuose
         </div>
       ) : (
         <div className="grid gap-3">
-          {renginiai.map(r => {
-            const rg = r.renginiai
+          {savanorystes.map(s => {
+            const rg = s.renginiai
             return (
-              <div key={r.id} className="card border-l-4 border-l-green-500">
+              <div key={s.id} className="card border-l-4 border-l-green-500">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold text-slate-800 mb-2">{rg.pavadinimas}</h3>
@@ -73,9 +72,10 @@ export default function ManoSavanorystes() {
                       {rg.vieta && <span className="flex items-center gap-1"><MapPin size={13} /> {rg.vieta}</span>}
                       {rg.mentorius && <span className="flex items-center gap-1"><User size={13} /> {rg.mentorius}</span>}
                     </div>
+                    {rg.pastabos && <p className="text-sm text-slate-400 mt-2">{rg.pastabos}</p>}
                   </div>
                   <span className="badge bg-green-50 text-green-700 flex items-center gap-1 ml-4 shrink-0">
-                    <CheckCircle2 size={12} /> Užsiregistravęs
+                    <CheckCircle2 size={12} /> Savanoriauta
                   </span>
                 </div>
               </div>
