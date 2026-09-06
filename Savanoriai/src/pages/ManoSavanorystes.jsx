@@ -22,6 +22,7 @@ export default function ManoSavanorystes() {
         .from('savanorystes')
         .select('*, renginiai(pavadinimas, data, laikas, vieta, mentorius)')
         .eq('savanoris_id', profile.savanoris_id)
+        .not('renginys_id', 'is', null)
         .order('sukurta', { ascending: false })
 
       setSavanorystes(data || [])
