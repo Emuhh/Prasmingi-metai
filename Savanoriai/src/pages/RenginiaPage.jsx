@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Plus, Search, Edit2, Trash2, X, Check, Users, Clock } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, X, Check, Users, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 
 const EMPTY_FORM = { pavadinimas: '', data: '', laikas: '', vieta: '', reik_savanoriu: '', mentorius: '', pastabos: '', registracija_nuo_data: '', registracija_nuo_laikas: '' }
 
@@ -12,6 +12,7 @@ export default function RenginiaPage() {
   const [editId, setEditId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [atidaryti, setAtidaryti] = useState({})
 
   const load = async () => {
     setLoading(true)
@@ -28,6 +29,35 @@ export default function RenginiaPage() {
   const filtered = renginiai.filter(r =>
     `${r.pavadinimas} ${r.vieta} ${r.mentorius}`.toLowerCase().includes(search.toLowerCase())
   )
+
+  // Grupuoti pagal metus ir mėnesius
+  const gruopuoti = (list) => {
+    const grupes = {}
+    list.forEach(r => {
+      const d = r.data
+      if (!d) {
+        if (!grupes['Nenurodyta']) grupes['Nenurodyta'] = {}
+        if (!grupes['Nenurodyta']['Nenurodyta']) grupes['Nenurodyta']['Nenurodyta'] = []
+        grupes['Nenurodyta']['Nenurodyta'].push(r)
+        return
+      }
+      const metai = d.slice(0, 4)
+      const menuo = d.slice(0, 7)
+      if (!grupes[metai]) grupes[metai] = {}
+      if (!grupes[metai][menuo]) grupes[metai][menuo] = []
+      grupes[metai][menuo].push(r)
+    })
+    return grupes
+  }
+
+  const menesioVardas = (menuo) => {
+    if (menuo === 'Nenurodyta') return 'Nenurodyta'
+    return new Date(menuo + '-01').toLocaleString('lt-LT', { month: 'long' })
+  }
+
+  const toggleMetai = (metai) => {
+    setAtidaryti(prev => ({ ...prev, [metai]: !prev[metai] }))
+  }
 
   const openAdd = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true) }
   const openEdit = (r) => {
@@ -76,6 +106,8 @@ export default function RenginiaPage() {
     return new Date() >= new Date(r.registracija_nuo)
   }
 
+  const grupes = gruopuoti(filtered)
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -111,7 +143,7 @@ export default function RenginiaPage() {
                 </div>
                 <div>
                   <label className="label">Laikas</label>
-                  <input className="input" type="time" value={form.laikas} onChange={e => setForm({ ...form, laikas: e.target.value })} placeholder="14:00" />
+                  <input className="input" type="time" value={form.laikas} onChange={e => setForm({ ...form, laikas: e.target.value })} />
                 </div>
               </div>
               <div>
@@ -134,7 +166,7 @@ export default function RenginiaPage() {
                 <label className="label">Registracija nuo (neprivaloma)</label>
                 <div className="grid grid-cols-2 gap-3">
                   <input className="input" type="date" value={form.registracija_nuo_data} onChange={e => setForm({ ...form, registracija_nuo_data: e.target.value })} />
-                  <input className="input" type="time" value={form.registracija_nuo_laikas} onChange={e => setForm({ ...form, registracija_nuo_laikas: e.target.value })} placeholder="19:00" />
+                  <input className="input" type="time" value={form.registracija_nuo_laikas} onChange={e => setForm({ ...form, registracija_nuo_laikas: e.target.value })} />
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Jei nenurodyta – registracija prieinama iš karto</p>
               </div>
@@ -153,60 +185,85 @@ export default function RenginiaPage() {
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="card text-center text-slate-400 py-12">Renginių nerasta</div>
       ) : (
-        <div className="grid gap-3">
-          {filtered.length === 0 ? (
-            <div className="card text-center text-slate-400 py-12">Renginių nerasta</div>
-          ) : filtered.map(r => {
-            const registered = r.savanorystes?.length || 0
-            const needed = r.reik_savanoriu || 0
-            const full = needed > 0 && registered >= needed
-            const regAktyvt = registracijaAktyvt(r)
-            return (
-              <div key={r.id} className="card hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium text-slate-800">{r.pavadinimas}</h3>
-                      {full && <span className="badge bg-green-50 text-green-700">Pilnas</span>}
-                      {!regAktyvt && (
-                        <span className="badge bg-amber-50 text-amber-700 flex items-center gap-1">
-                          <Clock size={11} /> Registracija uždaryta
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-slate-500">
-                      {r.data && <span>📅 {r.data}{r.laikas ? ` · ${r.laikas}` : ''}</span>}
-                      {r.vieta && <span>📍 {r.vieta}</span>}
-                      {r.mentorius && <span>👤 {r.mentorius}</span>}
-                      {r.registracija_nuo && !regAktyvt && (
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} /> Registracija nuo: {new Date(r.registracija_nuo).toLocaleString('lt-LT')}
-                        </span>
-                      )}
-                    </div>
-                    {r.pastabos && <p className="text-sm text-slate-400 mt-1">{r.pastabos}</p>}
-                  </div>
-                  <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-                    {needed > 0 && (
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                          <Users size={14} /> {registered}/{needed}
-                        </div>
-                        <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1">
-                          <div className={`h-full rounded-full transition-all ${full ? 'bg-green-500' : 'bg-brand-500'}`} style={{ width: `${Math.min(100, (registered / needed) * 100)}%` }} />
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex gap-1">
-                      <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"><Edit2 size={14} /></button>
-                      <button onClick={() => handleDelete(r.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
-                    </div>
-                  </div>
+        <div className="space-y-4">
+          {Object.entries(grupes).sort(([a], [b]) => b.localeCompare(a)).map(([metai, menesiai]) => (
+            <div key={metai} className="card p-0 overflow-hidden">
+              <button
+                onClick={() => toggleMetai(metai)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+              >
+                <span className="font-display font-bold text-xl text-slate-800">{metai}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-slate-400">
+                    {Object.values(menesiai).flat().length} renginiai
+                  </span>
+                  {atidaryti[metai] ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
                 </div>
-              </div>
-            )
-          })}
+              </button>
+
+              {atidaryti[metai] && (
+                <div className="border-t border-slate-100">
+                  {Object.entries(menesiai).sort(([a], [b]) => b.localeCompare(a)).map(([menuo, renginiai_m]) => (
+                    <div key={menuo}>
+                      <div className="px-6 py-2 bg-slate-50 border-b border-slate-100">
+                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                          {menesioVardas(menuo)}
+                        </span>
+                      </div>
+                      {renginiai_m.sort((a, b) => (b.data || '').localeCompare(a.data || '')).map(r => {
+                        const registered = r.savanorystes?.length || 0
+                        const needed = r.reik_savanoriu || 0
+                        const full = needed > 0 && registered >= needed
+                        const regAktyvt = registracijaAktyvt(r)
+                        return (
+                          <div key={r.id} className="px-6 py-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-b-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-medium text-slate-800">{r.pavadinimas}</h3>
+                                  {full && <span className="badge bg-green-50 text-green-700">Pilnas</span>}
+                                  {!regAktyvt && (
+                                    <span className="badge bg-amber-50 text-amber-700 flex items-center gap-1">
+                                      <Clock size={11} /> Registracija uždaryta
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-slate-500">
+                                  {r.data && <span>📅 {r.data}{r.laikas ? ` · ${r.laikas}` : ''}</span>}
+                                  {r.vieta && <span>📍 {r.vieta}</span>}
+                                  {r.mentorius && <span>👤 {r.mentorius}</span>}
+                                </div>
+                                {r.pastabos && <p className="text-sm text-slate-400 mt-1">{r.pastabos}</p>}
+                              </div>
+                              <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                                {needed > 0 && (
+                                  <div className="text-right">
+                                    <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
+                                      <Users size={14} /> {registered}/{needed}
+                                    </div>
+                                    <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1">
+                                      <div className={`h-full rounded-full transition-all ${full ? 'bg-green-500' : 'bg-brand-500'}`} style={{ width: `${Math.min(100, (registered / needed) * 100)}%` }} />
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="flex gap-1">
+                                  <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"><Edit2 size={14} /></button>
+                                  <button onClick={() => handleDelete(r.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
