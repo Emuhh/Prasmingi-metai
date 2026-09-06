@@ -22,6 +22,7 @@ export default function SavanoriasLeaderboard() {
       const { data: savs } = await supabase
         .from('savanorystes')
         .select('savanoris_id, valandos')
+        .not('renginys_id', 'is', null)
 
       if (!savs) { setLoading(false); return }
 
