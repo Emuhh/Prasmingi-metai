@@ -8,7 +8,6 @@ import SavanoriaiPage from './pages/SavanoriaiPage'
 import SavanorystesPage from './pages/SavanorystesPage'
 import RenginiaPage from './pages/RenginiaPage'
 import StatistikaPage from './pages/StatistikaPage'
-import RezervacijosPage from './pages/RezervacijosPage'
 import SavanoriasRenginiai from './pages/SavanoriasRenginiai'
 import SavanoriasLeaderboard from './pages/SavanoriasLeaderboard'
 import ManoSavanorystes from './pages/ManoSavanorystes'
@@ -47,7 +46,6 @@ export default function App() {
         <Route path="savanorystes" element={<SavanorystesPage />} />
         <Route path="renginiai" element={<RenginiaPage />} />
         <Route path="statistika" element={<StatistikaPage />} />
-        <Route path="rezervacijos" element={<RezervacijosPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
