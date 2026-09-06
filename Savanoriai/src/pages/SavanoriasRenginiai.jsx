@@ -161,10 +161,18 @@ export default function SavanoriasRenginiai() {
                           <Check size={12} /> Užsiregistravęs
                         </span>
                       )}
-                      {vietosLiko !== null && (
-                        <span className={`text-xs font-medium ${vietosLiko === 0 ? 'text-red-500' : 'text-slate-500'}`}>
-                          {vietosLiko === 0 ? 'Vietos užimtos' : vietosLiko === 1 ? '1 vieta liko' : vietosLiko >= 10 ? `${vietosLiko} vietų liko` : `${vietosLiko} vietos liko`}
-                        </span>
+                      {r.reik_savanoriu && (
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
+                            <User size={14} /> {r.savanorystes?.length || 0}/{r.reik_savanoriu}
+                          </div>
+                          <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1">
+                            <div
+                              className={`h-full rounded-full transition-all ${vietosLiko === 0 ? 'bg-green-500' : 'bg-brand-500'}`}
+                              style={{ width: `${Math.min(100, ((r.savanorystes?.length || 0) / r.reik_savanoriu) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
                       )}
                       {!mano && regAktyvt && (
                         <button
