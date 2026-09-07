@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Plus, Search, Edit2, Trash2, X, Check } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 const EMPTY_FORM = { vardas: '', pavarde: '', el_pastas: '', telefonas: '', mentorius: '' }
 
@@ -12,6 +12,7 @@ export default function SavanoriaiPage() {
   const [editId, setEditId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [atidaryti, setAtidaryti] = useState({})
 
   const load = async () => {
     setLoading(true)
@@ -28,6 +29,21 @@ export default function SavanoriaiPage() {
   const filtered = savanoriai.filter(s =>
     `${s.vardas} ${s.pavarde} ${s.mentorius}`.toLowerCase().includes(search.toLowerCase())
   )
+
+  // Grupuoti pagal mentorių
+  const gruopuoti = (list) => {
+    const grupes = {}
+    list.forEach(s => {
+      const mentorius = s.mentorius || 'Nenurodyta'
+      if (!grupes[mentorius]) grupes[mentorius] = []
+      grupes[mentorius].push(s)
+    })
+    return grupes
+  }
+
+  const toggleGrupe = (key) => {
+    setAtidaryti(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const openAdd = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true) }
   const openEdit = (s) => {
@@ -63,6 +79,8 @@ export default function SavanoriaiPage() {
 
   const totalValandos = (s) => s.savanorystes?.reduce((sum, r) => sum + (r.valandos || 0), 0) || 0
 
+  const grupes = gruopuoti(filtered)
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -74,142 +92,121 @@ export default function SavanoriaiPage() {
           <Plus size={16} /> Pridėti savanorį
         </button>
       </div>
+
       <div className="relative mb-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-        <input
-          className="input pl-10"
-          placeholder="Ieškoti pagal vardą, pavardę, mentorių..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <input className="input pl-10" placeholder="Ieškoti pagal vardą, pavardę, mentorių..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
+
       {showForm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-semibold text-lg">
-                {editId ? 'Redaguoti savanorį' : 'Naujas savanoris'}
-              </h2>
-              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={20} />
-              </button>
+              <h2 className="font-display font-semibold text-lg">{editId ? 'Redaguoti savanorį' : 'Naujas savanoris'}</h2>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">Vardas *</label>
-                  <input
-                    className="input"
-                    value={form.vardas}
-                    onChange={e => setForm({ ...form, vardas: e.target.value })}
-                    placeholder="Vardas"
-                  />
+                  <input className="input" value={form.vardas} onChange={e => setForm({ ...form, vardas: e.target.value })} placeholder="Vardas" />
                 </div>
                 <div>
                   <label className="label">Pavardė *</label>
-                  <input
-                    className="input"
-                    value={form.pavarde}
-                    onChange={e => setForm({ ...form, pavarde: e.target.value })}
-                    placeholder="Pavardė"
-                  />
+                  <input className="input" value={form.pavarde} onChange={e => setForm({ ...form, pavarde: e.target.value })} placeholder="Pavardė" />
                 </div>
               </div>
               <div>
                 <label className="label">El. paštas</label>
-                <input
-                  className="input"
-                  type="email"
-                  value={form.el_pastas}
-                  onChange={e => setForm({ ...form, el_pastas: e.target.value })}
-                  placeholder="el.pastas@example.com"
-                />
+                <input className="input" type="email" value={form.el_pastas} onChange={e => setForm({ ...form, el_pastas: e.target.value })} placeholder="el.pastas@example.com" />
               </div>
               <div>
                 <label className="label">Telefonas</label>
-                <input
-                  className="input"
-                  value={form.telefonas}
-                  onChange={e => setForm({ ...form, telefonas: e.target.value })}
-                  placeholder="+370..."
-                />
+                <input className="input" value={form.telefonas} onChange={e => setForm({ ...form, telefonas: e.target.value })} placeholder="+370..." />
               </div>
               <div>
                 <label className="label">Mentorius</label>
-                <input
-                  className="input"
-                  value={form.mentorius}
-                  onChange={e => setForm({ ...form, mentorius: e.target.value })}
-                  placeholder="Mentoriaus vardas"
-                />
+                <input className="input" value={form.mentorius} onChange={e => setForm({ ...form, mentorius: e.target.value })} placeholder="Mentoriaus vardas" />
               </div>
             </div>
             <div className="flex gap-2 mt-5">
-              <button onClick={() => setShowForm(false)} className="btn-secondary flex-1 justify-center">
-                Atšaukti
-              </button>
+              <button onClick={() => setShowForm(false)} className="btn-secondary flex-1 justify-center">Atšaukti</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
-                {saving
-                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <><Check size={15} /> Išsaugoti</>
-                }
+                {saving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Check size={15} /> Išsaugoti</>}
               </button>
             </div>
           </div>
         </div>
       )}
+
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="card text-center text-slate-400 py-12">Savanorių nerasta</div>
       ) : (
-        <div className="card p-0 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left font-medium text-slate-500 px-6 py-3">Savanoris</th>
-                <th className="text-left font-medium text-slate-500 px-6 py-3">El. paštas</th>
-                <th className="text-left font-medium text-slate-500 px-6 py-3">Telefonas</th>
-                <th className="text-left font-medium text-slate-500 px-6 py-3">Mentorius</th>
-                <th className="text-right font-medium text-slate-500 px-6 py-3">Valandos</th>
-                <th className="px-6 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center text-slate-400 py-12">Savanorių nerasta</td>
-                </tr>
-              ) : filtered.map(s => (
-                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs flex-shrink-0">
-                        {s.vardas?.[0]}{s.pavarde?.[0]}
-                      </div>
-                      <span className="font-medium text-slate-800">{s.vardas} {s.pavarde}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 text-slate-500">{s.el_pastas || '—'}</td>
-                  <td className="px-6 py-3 text-slate-500">{s.telefonas || '—'}</td>
-                  <td className="px-6 py-3 text-slate-500">{s.mentorius || '—'}</td>
-                  <td className="px-6 py-3 text-right">
-                    <span className="badge bg-brand-50 text-brand-700">{totalValandos(s)}h</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openEdit(s)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
-                        <Edit2 size={14} />
-                      </button>
-                      <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {Object.entries(grupes).sort(([a], [b]) => a.localeCompare(b)).map(([mentorius, sav]) => (
+            <div key={mentorius} className="card p-0 overflow-hidden">
+              <button
+                onClick={() => toggleGrupe(mentorius)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs">
+                    {mentorius[0]}
+                  </div>
+                  <span className="font-display font-semibold text-lg text-slate-800">{mentorius}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-slate-400">{sav.length} savanoriai</span>
+                  {atidaryti[mentorius] ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                </div>
+              </button>
+
+              {atidaryti[mentorius] && (
+                <div className="border-t border-slate-100">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50">
+                        <th className="text-left font-medium text-slate-500 px-6 py-2">Savanoris</th>
+                        <th className="text-left font-medium text-slate-500 px-6 py-2">El. paštas</th>
+                        <th className="text-left font-medium text-slate-500 px-6 py-2">Telefonas</th>
+                        <th className="text-right font-medium text-slate-500 px-6 py-2">Valandos</th>
+                        <th className="px-6 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sav.map(s => (
+                        <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-b-0">
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs flex-shrink-0">
+                                {s.vardas?.[0]}{s.pavarde?.[0]}
+                              </div>
+                              <span className="font-medium text-slate-800">{s.vardas} {s.pavarde}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-slate-500">{s.el_pastas || '—'}</td>
+                          <td className="px-6 py-3 text-slate-500">{s.telefonas || '—'}</td>
+                          <td className="px-6 py-3 text-right">
+                            <span className="badge bg-brand-50 text-brand-700">{totalValandos(s)}h</span>
+                          </td>
+                          <td className="px-6 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <button onClick={() => openEdit(s)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"><Edit2 size={14} /></button>
+                              <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
