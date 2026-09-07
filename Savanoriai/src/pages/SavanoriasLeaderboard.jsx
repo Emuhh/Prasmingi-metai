@@ -61,6 +61,8 @@ export default function SavanoriasLeaderboard() {
   )
 
   const medaliai = ['🥇', '🥈', '🥉']
+  const [rodoVisus, setRodoVisus] = useState(false)
+  const rodomaSavanoriai = rodoVisus ? leaderboard : leaderboard.slice(0, 5)
 
   return (
     <div>
@@ -96,7 +98,7 @@ export default function SavanoriasLeaderboard() {
           <h2 className="font-display font-semibold text-lg text-slate-800">Visos vietos</h2>
         </div>
         <div className="divide-y divide-slate-50">
-          {leaderboard.map((s) => {
+          {rodomaSavanoriai.map((s) => {
             const isMano = manoInfo && s.id === manoInfo.id
             return (
               <div
@@ -119,8 +121,16 @@ export default function SavanoriasLeaderboard() {
                   <span className={`font-semibold ${isMano ? 'text-brand-700' : 'text-slate-700'}`}>
                     {s.savanorystes} sav.
                   </span>
-                </div>
-              </div>
+                    </div>
+                    {leaderboard.length > 5 && (
+                      <button
+                        onClick={() => setRodoVisus(!rodoVisus)}
+                        className="w-full py-3 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors flex items-center justify-center gap-2 border-t border-slate-100"
+                      >
+                        {rodoVisus ? '▲ Rodyti mažiau' : `▼ Rodyti visus (${leaderboard.length})`}
+                      </button>
+                    )}
+                  </div>
             )
           })}
         </div>
