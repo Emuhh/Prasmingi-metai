@@ -9,10 +9,10 @@ export default function SavanoriasLeaderboard() {
   const [manoVieta, setManoVieta] = useState(null)
   const [manoInfo, setManoInfo] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [rodoVisus, setRodoVisus] = useState(false)
 
   useEffect(() => {
     async function load() {
-      // Gauti profilio savanoris_id
       const { data: profile } = await supabase
         .from('profiles')
         .select('savanoris_id')
@@ -26,7 +26,6 @@ export default function SavanoriasLeaderboard() {
 
       if (!savs) { setLoading(false); return }
 
-      // Suskaičiuoti savanorystes
       const savMap = {}
       savs.forEach(s => {
         if (!savMap[s.savanoris_id]) savMap[s.savanoris_id] = { savanorystes: 0, valandos: 0 }
@@ -40,7 +39,6 @@ export default function SavanoriasLeaderboard() {
 
       setLeaderboard(sorted)
 
-      // Rasti mano vietą
       if (profile?.savanoris_id) {
         const mano = sorted.find(s => s.id === profile.savanoris_id)
         if (mano) {
@@ -52,7 +50,7 @@ export default function SavanoriasLeaderboard() {
       setLoading(false)
     }
     load()
-  },  [user?.id])
+  }, [user?.id])
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -61,7 +59,6 @@ export default function SavanoriasLeaderboard() {
   )
 
   const medaliai = ['🥇', '🥈', '🥉']
-  const [rodoVisus, setRodoVisus] = useState(false)
   const rodomaSavanoriai = rodoVisus ? leaderboard : leaderboard.slice(0, 5)
 
   return (
@@ -71,7 +68,6 @@ export default function SavanoriasLeaderboard() {
         <p className="text-slate-500 mt-1">Savanorysčių skaičius</p>
       </div>
 
-      {/* Mano vieta */}
       {manoInfo && (
         <div className="card bg-brand-50 border-brand-200 mb-6">
           <div className="flex items-center justify-between">
@@ -92,7 +88,6 @@ export default function SavanoriasLeaderboard() {
         </div>
       )}
 
-      {/* Leaderboard */}
       <div className="card p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
           <h2 className="font-display font-semibold text-lg text-slate-800">Visos vietos</h2>
@@ -121,19 +116,19 @@ export default function SavanoriasLeaderboard() {
                   <span className={`font-semibold ${isMano ? 'text-brand-700' : 'text-slate-700'}`}>
                     {s.savanorystes} sav.
                   </span>
-                    </div>
-                    {leaderboard.length > 5 && (
-                      <button
-                        onClick={() => setRodoVisus(!rodoVisus)}
-                        className="w-full py-3 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors flex items-center justify-center gap-2 border-t border-slate-100"
-                      >
-                        {rodoVisus ? '▲ Rodyti mažiau' : `▼ Rodyti visus (${leaderboard.length})`}
-                      </button>
-                    )}
-                  </div>
+                </div>
+              </div>
             )
           })}
         </div>
+        {leaderboard.length > 5 && (
+          <button
+            onClick={() => setRodoVisus(!rodoVisus)}
+            className="w-full py-3 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors flex items-center justify-center gap-2 border-t border-slate-100"
+          >
+            {rodoVisus ? '▲ Rodyti mažiau' : `▼ Rodyti visus (${leaderboard.length})`}
+          </button>
+        )}
       </div>
     </div>
   )
