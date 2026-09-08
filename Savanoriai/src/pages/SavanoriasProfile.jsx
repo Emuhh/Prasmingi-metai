@@ -39,7 +39,12 @@ export default function SavanoriasProfile() {
       const valandosSum = rezervacijos?.reduce((sum, r) => sum + (r.renginiai?.valandos || 0), 0) || 0
 
       setSavanoris({ ...data, savanorystes_count: savanorystesCount, valandos_sum: valandosSum })
-      setForm({ el_pastas: data?.el_pastas || '', telefonas: data?.telefonas || '' })
+      setForm({
+        el_pastas: data?.el_pastas || '',
+        telefonas: data?.telefonas || '',
+        mokykla: data?.mokykla || '',
+        klase: data?.klase || ''
+      })
       setLoading(false)
     }
     load()
@@ -159,6 +164,24 @@ export default function SavanoriasProfile() {
               value={form.telefonas}
               onChange={e => setForm({ ...form, telefonas: e.target.value })}
               placeholder="+370..."
+            />
+          </div>
+          <div>
+            <label className="label">Mokykla</label>
+            <input
+              className="input"
+              value={form.mokykla}
+              onChange={e => setForm({ ...form, mokykla: e.target.value })}
+              placeholder="Pvz. Kauno ..."
+            />
+          </div>
+          <div>
+            <label className="label">Klasė</label>
+            <input
+              className="input"
+              value={form.klase}
+              onChange={e => setForm({ ...form, klase: e.target.value })}
+              placeholder="Pvz. 11a"
             />
           </div>
         </div>
