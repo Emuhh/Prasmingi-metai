@@ -63,19 +63,41 @@ export default function SavanoriasProfile() {
     setSaving(false)
   }
 
+  const resizeImage = (file, maxSize = 300) => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+
+        if (width > height) {
+          if (width > maxSize) { height *= maxSize / width; width = maxSize }
+        } else {
+          if (height > maxSize) { width *= maxSize / height; height = maxSize }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85)
+      }
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handlePhoto = async (e) => {
     const file = e.target.files?.[0]
     if (!file || !savanoris) return
     setUploadingPhoto(true)
 
-    const ext = file.name.split('.').pop()
-    const path = `${savanoris.id}.${ext}`
+    const resizedBlob = await resizeImage(file)
+    const path = `${savanoris.id}.jpg`
 
     await supabase.storage.from('Avatars').remove([path])
 
     const { error } = await supabase.storage
       .from('Avatars')
-      .upload(path, file)
+      .upload(path, resizedBlob, { contentType: 'image/jpeg' })
 
     if (!error) {
       const { data: { publicUrl } } = supabase.storage
