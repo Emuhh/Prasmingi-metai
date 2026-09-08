@@ -72,12 +72,12 @@ export default function SavanoriasProfile() {
     const path = `${savanoris.id}.${ext}`
 
     const { error } = await supabase.storage
-      .from('avatars')
+      .from('Avatars')
       .upload(path, file, { upsert: true })
 
     if (!error) {
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from('Avatars')
         .getPublicUrl(path)
 
       await supabase
@@ -172,7 +172,7 @@ export default function SavanoriasProfile() {
               className="input"
               value={form.mokykla}
               onChange={e => setForm({ ...form, mokykla: e.target.value })}
-              placeholder="Pvz. Kauno ..."
+              placeholder="Pvz. Jurbarko ..."
             />
           </div>
           <div>
