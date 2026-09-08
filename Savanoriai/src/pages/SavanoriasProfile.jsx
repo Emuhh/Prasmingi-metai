@@ -71,9 +71,11 @@ export default function SavanoriasProfile() {
     const ext = file.name.split('.').pop()
     const path = `${savanoris.id}.${ext}`
 
+    await supabase.storage.from('Avatars').remove([path])
+
     const { error } = await supabase.storage
       .from('Avatars')
-      .upload(path, file, { upsert: true })
+      .upload(path, file)
 
     if (!error) {
       const { data: { publicUrl } } = supabase.storage
