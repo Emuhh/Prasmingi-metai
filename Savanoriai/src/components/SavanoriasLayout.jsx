@@ -1,6 +1,8 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { Calendar, Trophy, LogOut, Heart, ClipboardList } from 'lucide-react'
+import { Calendar, Trophy, LogOut, ClipboardList, UserCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 const navItems = [
   { to: '/renginiai', icon: Calendar, label: 'Renginiai' },
@@ -11,6 +13,28 @@ const navItems = [
 export default function SavanoriasLayout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const [savanoris, setSavanoris] = useState(null)
+
+  useEffect(() => {
+    async function load() {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('savanoris_id')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile?.savanoris_id) return
+
+      const { data } = await supabase
+        .from('savanoriai')
+        .select('vardas, pavarde, avatar_url')
+        .eq('id', profile.savanoris_id)
+        .single()
+
+      setSavanoris(data)
+    }
+    load()
+  }, [user])
 
   const handleSignOut = async () => {
     await signOut()
@@ -23,7 +47,20 @@ export default function SavanoriasLayout() {
       <aside className="hidden md:flex w-64 bg-white border-r border-slate-100 flex-col fixed inset-y-0 z-10">
         <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-100">
           <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
-            <Heart className="w-5 h-5 text-white" />
+            <svg viewBox="0 0 100 130" width="20" height="20" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M50,5 L58,25 L50,35 L42,25 Z"/>
+              <path d="M50,35 C50,35 50,55 50,65"/>
+              <path d="M50,45 C35,38 15,40 8,55 C3,67 12,78 25,72 C35,68 44,58 50,45"/>
+              <path d="M50,45 C65,38 85,40 92,55 C97,67 88,78 75,72 C65,68 56,58 50,45"/>
+              <path d="M50,45 C42,50 35,62 32,75"/>
+              <path d="M50,45 C58,50 65,62 68,75"/>
+              <rect x="35" y="75" width="30" height="5" rx="2"/>
+              <rect x="37" y="82" width="26" height="5" rx="2"/>
+              <path d="M43,87 C38,90 30,98 32,108 C33,115 40,112 44,105"/>
+              <path d="M57,87 C62,90 70,98 68,108 C67,115 60,112 56,105"/>
+              <path d="M44,87 L50,115 L56,87"/>
+              <path d="M47,115 L44,125 L50,120 L56,125 L53,115"/>
+            </svg>
           </div>
           <div>
             <span className="font-display font-bold text-xl text-slate-800">Savanoriai</span>
@@ -52,11 +89,33 @@ export default function SavanoriasLayout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Profilis apačioje */}
         <div className="px-3 py-4 border-t border-slate-100">
-          <div className="px-4 py-2 mb-1">
-            <p className="text-xs text-slate-400">Prisijungęs</p>
-            <p className="text-sm font-medium text-slate-700 truncate">{user?.email}</p>
-          </div>
+          <NavLink
+            to="/profilis"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-2 ${
+                isActive ? 'bg-brand-50' : 'hover:bg-slate-50'
+              }`
+            }
+          >
+            {savanoris?.avatar_url ? (
+              <img src={savanoris.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+            ) : (
+              <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
+                {savanoris?.vardas?.[0]}{savanoris?.pavarde?.[0]}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-800 truncate">
+                {savanoris ? `${savanoris.vardas} ${savanoris.pavarde}` : '...'}
+              </p>
+              <p className="text-xs text-slate-400">Mano profilis</p>
+            </div>
+            <UserCircle size={16} className="text-slate-400 flex-shrink-0" />
+          </NavLink>
+
           <button onClick={handleSignOut} className="btn-danger w-full justify-center text-sm">
             <LogOut size={15} /> Atsijungti
           </button>
@@ -89,6 +148,25 @@ export default function SavanoriasLayout() {
               )}
             </NavLink>
           ))}
+          <NavLink
+            to="/profilis"
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+                isActive ? 'text-brand-600' : 'text-slate-400'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {savanoris?.avatar_url ? (
+                  <img src={savanoris.avatar_url} className="w-5 h-5 rounded-full object-cover" alt="" />
+                ) : (
+                  <UserCircle size={20} className={isActive ? 'text-brand-600' : 'text-slate-400'} />
+                )}
+                <span className="text-xs font-medium">Profilis</span>
+              </>
+            )}
+          </NavLink>
           <button onClick={handleSignOut} className="flex flex-col items-center gap-0.5 px-3 py-1.5 text-slate-400">
             <LogOut size={20} />
             <span className="text-xs font-medium">Išeiti</span>
