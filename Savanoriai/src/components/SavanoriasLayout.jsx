@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { Calendar, Trophy, LogOut, ClipboardList, UserCircle } from 'lucide-react'
+import { Calendar, Trophy, LogOut, ClipboardList, UserCircle, Award } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/renginiai', icon: Calendar, label: 'Renginiai' },
   { to: '/mano', icon: ClipboardList, label: 'Mano' },
   { to: '/leaderboard', icon: Trophy, label: 'Lyderiai' },
+  { to: '/pasiekimai', icon: Award, label: 'Pasiekimai' },
 ]
 
 export default function SavanoriasLayout() {
