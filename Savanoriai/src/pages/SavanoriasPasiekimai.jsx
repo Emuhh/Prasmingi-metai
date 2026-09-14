@@ -13,9 +13,6 @@ export default function SavanoriasPasiekimai() {
           <Award size={28} />
         </div>
         <h2 className="font-display font-semibold text-lg text-slate-700 mb-1">Netrukus</h2>
-        <p className="text-slate-400 text-sm max-w-sm mx-auto">
-          Čia netrukus atsiras ženkleliai už savanorystes, valandas ir aktyvumą.
-        </p>
       </div>
     </div>
   )
