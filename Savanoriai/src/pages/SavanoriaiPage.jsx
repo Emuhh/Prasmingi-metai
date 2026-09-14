@@ -135,9 +135,13 @@ export default function SavanoriaiPage() {
             <div className="p-6 border-b border-slate-100">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-700 font-bold text-2xl flex-shrink-0">
-                    {showProfile.vardas?.[0]}{showProfile.pavarde?.[0]}
-                  </div>
+                  {showProfile.avatar_url ? (
+                    <img src={showProfile.avatar_url} alt="" className="w-16 h-16 rounded-2xl object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-700 font-bold text-2xl flex-shrink-0">
+                      {showProfile.vardas?.[0]}{showProfile.pavarde?.[0]}
+                    </div>
+                  )}
                   <div>
                     <h2 className="font-display font-bold text-2xl text-slate-800">{showProfile.vardas} {showProfile.pavarde}</h2>
                     {showProfile.mentorius && (
@@ -180,6 +184,12 @@ export default function SavanoriaiPage() {
                   </a>
                 ) : (
                   <p className="text-sm text-slate-400 flex items-center gap-3"><Phone size={16} /> Telefonas nenurodytas</p>
+                )}
+                {(showProfile.mokykla || showProfile.klase) && (
+                  <p className="text-sm text-slate-600 flex items-center gap-3">
+                    <User size={16} className="text-slate-400" />
+                    {showProfile.mokykla}{showProfile.mokykla && showProfile.klase ? ', ' : ''}{showProfile.klase}
+                  </p>
                 )}
               </div>
             </div>
@@ -232,9 +242,13 @@ export default function SavanoriaiPage() {
               onClick={() => openProfile(s)}
               className={`flex items-center gap-4 px-6 py-4 hover:bg-slate-50 cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-slate-100' : ''}`}
             >
-              <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
-                {s.vardas?.[0]}{s.pavarde?.[0]}
-              </div>
+              {s.avatar_url ? (
+                <img src={s.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
+                  {s.vardas?.[0]}{s.pavarde?.[0]}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-800">{s.vardas} {s.pavarde}</p>
                 <p className="text-xs text-slate-400">{s.mentorius ? `Mentorius: ${s.mentorius}` : 'Mentorius nenurodytas'}</p>
