@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { Camera, Phone, Mail, Check, X } from 'lucide-react'
+import { Camera, Phone, Mail, Check, X, Trash2 } from 'lucide-react'
 
 export default function SavanoriasProfile() {
   const { user } = useAuth()
@@ -114,6 +114,16 @@ export default function SavanoriasProfile() {
     setUploadingPhoto(false)
   }
 
+  const handleRemovePhoto = async () => {
+    if (!savanoris?.avatar_url) return
+    setUploadingPhoto(true)
+    const path = `${savanoris.id}.jpg`
+    await supabase.storage.from('Avatars').remove([path])
+    await supabase.from('savanoriai').update({ avatar_url: null }).eq('id', savanoris.id)
+    setSavanoris(prev => ({ ...prev, avatar_url: null }))
+    setUploadingPhoto(false)
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
@@ -159,6 +169,15 @@ export default function SavanoriasProfile() {
               }
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+            {savanoris.avatar_url && (
+              <button
+                onClick={handleRemovePhoto}
+                disabled={uploadingPhoto}
+                className="absolute -bottom-2 -left-2 w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 shadow-md transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
           <div>
             <h2 className="font-display font-bold text-2xl text-slate-800">{savanoris.vardas} {savanoris.pavarde}</h2>
