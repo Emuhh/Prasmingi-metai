@@ -9,6 +9,7 @@ export default function RegistracijaPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [showPasswordHint, setShowPasswordHint] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,8 +18,16 @@ export default function RegistracijaPage() {
       setError('Užpildykite visus laukus')
       return
     }
-    if (form.slaptazodis.length < 6) {
-      setError('Slaptažodis turi būti bent 6 simbolių')
+    if (form.slaptazodis.length < 8) {
+      setError('Slaptažodis turi būti bent 8 simbolių')
+      return
+    }
+    if (!/\d/.test(form.slaptazodis)) {
+      setError('Slaptažodis turi turėti bent vieną skaičių')
+      return
+    }
+    if (!/[^A-Za-z0-9]/.test(form.slaptazodis)) {
+      setError('Slaptažodis turi turėti bent vieną simbolį (pvz. !@#$%)')
       return
     }
     setLoading(true)
@@ -78,8 +87,20 @@ export default function RegistracijaPage() {
           </div>
           <div>
             <label className="label">Slaptažodis</label>
-            <input className="input" type="password" value={form.slaptazodis} onChange={e => setForm({ ...form, slaptazodis: e.target.value })} />
-            <p className="text-xs text-amber-600 font-medium mt-1.5">⚠️ Nepamiršk šio slaptažodžio — vėliau jo atkurti nebus galima!</p>
+            <input
+              className="input"
+              type="password"
+              value={form.slaptazodis}
+              onChange={e => setForm({ ...form, slaptazodis: e.target.value })}
+              onFocus={() => setShowPasswordHint(true)}
+              onBlur={() => setShowPasswordHint(false)}
+            />
+            {showPasswordHint && (
+              <>
+                <p className="text-xs text-slate-400 mt-1.5">Bent 8 simboliai, bent 1 skaičius ir 1 simbolis (!@#$ ir pan.)</p>
+                <p className="text-xs text-amber-600 font-medium mt-1">⚠️ Nepamiršk šio slaptažodžio — vėliau jo atkurti nebus galima!</p>
+              </>
+            )}
           </div>
         </div>
 
