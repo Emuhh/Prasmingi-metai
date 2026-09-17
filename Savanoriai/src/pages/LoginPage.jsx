@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { Link } from 'react-router-dom'
 import { Heart, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
@@ -60,6 +61,9 @@ export default function LoginPage() {
               {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Prisijungti'}
             </button>
           </form>
+          <p className="text-center text-sm text-slate-500 mt-5">
+            Neturi paskyros? <Link to="/registracija" className="text-brand-600 font-medium">Registruotis</Link>
+          </p>
         </div>
       </div>
     </div>
