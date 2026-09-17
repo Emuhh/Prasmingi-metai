@@ -22,7 +22,7 @@ export default function RegistracijaPage() {
       return
     }
     setLoading(true)
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: form.el_pastas,
       password: form.slaptazodis,
       options: { data: { vardas: form.vardas, pavarde: form.pavarde } }
@@ -30,6 +30,10 @@ export default function RegistracijaPage() {
     setLoading(false)
     if (signUpError) {
       setError(signUpError.message === 'User already registered' ? 'Toks el. paštas jau užregistruotas' : signUpError.message)
+      return
+    }
+    if (signUpData?.user && signUpData.user.identities?.length === 0) {
+      setError('Toks el. paštas jau užregistruotas')
       return
     }
     setDone(true)
