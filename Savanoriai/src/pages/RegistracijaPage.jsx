@@ -61,7 +61,7 @@ export default function RegistracijaPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-start justify-center bg-slate-50 p-4 py-10 overflow-y-auto">
       <form onSubmit={handleSubmit} className="card max-w-sm w-full">
         <div className="flex items-center gap-2 mb-5">
           <UserPlus className="text-brand-600" size={22} />

@@ -27,7 +27,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-brand-50 to-slate-100 flex items-start justify-center p-4 py-10 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-200">
@@ -46,7 +46,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">El. paštas</label>
-              <input type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} placeholder="mentorius@example.com" required />
+              <input type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} placeholder="savanoris@example.com" required />
             </div>
             <div>
               <label className="label">Slaptažodis</label>
