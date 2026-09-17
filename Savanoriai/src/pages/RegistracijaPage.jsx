@@ -75,6 +75,7 @@ export default function RegistracijaPage() {
           <div>
             <label className="label">Slaptažodis</label>
             <input className="input" type="password" value={form.slaptazodis} onChange={e => setForm({ ...form, slaptazodis: e.target.value })} />
+            <p className="text-xs text-amber-600 font-medium mt-1.5">⚠️ Nepamiršk šio slaptažodžio — vėliau jo atkurti nebus galima!</p>
           </div>
         </div>
 
