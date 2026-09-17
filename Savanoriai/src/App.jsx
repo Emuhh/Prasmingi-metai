@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import SavanoriasLayout from './components/SavanoriasLayout'
 import LoginPage from './pages/LoginPage'
+import RegistracijaPage from './pages/RegistracijaPage'
 import DashboardPage from './pages/DashboardPage'
 import SavanoriaiPage from './pages/SavanoriaiPage'
 import SavanorystesPage from './pages/SavanorystesPage'
@@ -27,6 +28,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/registracija" element={<RegistracijaPage />} />
         <Route path="/" element={<PrivateRoute><SavanoriasLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="/renginiai" replace />} />
           <Route path="renginiai" element={<SavanoriasRenginiai />} />
@@ -43,6 +45,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/registracija" element={<RegistracijaPage />} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
