@@ -57,7 +57,7 @@ export default function RegistracijaPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="card max-w-sm text-center">
           <h1 className="font-display font-bold text-xl text-slate-800 mb-2">Registracija sėkminga!</h1>
-          <p className="text-slate-500 text-sm mb-4">Patikrink savo el. paštą — gali reikėti patvirtinti paskyrą prieš prisijungiant.</p>
+                   <p className="text-slate-500 text-sm mb-4">Paskyra sukurta! Dabar gali prisijungti su savo el. paštu ir slaptažodžiu.</p>
           <Link to="/login" className="btn-primary w-full justify-center">Prisijungti</Link>
         </div>
       </div>
