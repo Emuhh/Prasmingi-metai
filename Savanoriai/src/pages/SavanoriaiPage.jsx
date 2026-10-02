@@ -66,7 +66,7 @@ export default function SavanoriaiPage() {
   }
 
   const totalValandos = (s) => s.savanorystes?.reduce((sum, r) => sum + (r.valandos || 0), 0) || 0
-  const totalSavanorystes = (s) => s.savanorystes?.length || 0
+  const totalSavanorystes = (s) => s.savanorystes?.filter(r => r.valandos > 0).length || 0
 
   return (
     <div>

@@ -33,6 +33,7 @@ export default function SavanoriasProfile() {
         .from('savanorystes')
         .select('valandos')
         .eq('savanoris_id', profile.savanoris_id)
+        .gt('valandos', 0)
 
       const savanorystesCount = savanorystes?.length || 0
       const valandosSum = savanorystes?.reduce((sum, s) => sum + (s.valandos || 0), 0) || 0
