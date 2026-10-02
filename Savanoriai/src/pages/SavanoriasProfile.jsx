@@ -29,14 +29,13 @@ export default function SavanoriasProfile() {
         .eq('id', profile.savanoris_id)
         .single()
 
-      const { data: rezervacijos } = await supabase
-        .from('rezervacijos')
-        .select('renginiai(valandos)')
+      const { data: savanorystes } = await supabase
+        .from('savanorystes')
+        .select('valandos')
         .eq('savanoris_id', profile.savanoris_id)
-        .eq('statusas', 'patvirtinta')
 
-      const savanorystesCount = rezervacijos?.length || 0
-      const valandosSum = rezervacijos?.reduce((sum, r) => sum + (r.renginiai?.valandos || 0), 0) || 0
+      const savanorystesCount = savanorystes?.length || 0
+      const valandosSum = savanorystes?.reduce((sum, s) => sum + (s.valandos || 0), 0) || 0
 
       setSavanoris({ ...data, savanorystes_count: savanorystesCount, valandos_sum: valandosSum })
       setForm({
