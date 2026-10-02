@@ -5,7 +5,7 @@ import { UserPlus } from 'lucide-react'
 
 export default function RegistracijaPage() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ vardas: '', pavarde: '', el_pastas: '', slaptazodis: '' })
+  const [form, setForm] = useState({ vardas: '', pavarde: '', el_pastas: '', slaptazodis: '', slaptazodis2: '' })  
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -14,7 +14,7 @@ export default function RegistracijaPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!form.vardas || !form.pavarde || !form.el_pastas || !form.slaptazodis) {
+    if (!form.vardas || !form.pavarde || !form.el_pastas || !form.slaptazodis || !form.slaptazodis2) {
       setError('Užpildykite visus laukus')
       return
     }
@@ -28,6 +28,10 @@ export default function RegistracijaPage() {
     }
     if (!/[^A-Za-z0-9]/.test(form.slaptazodis)) {
       setError('Slaptažodis turi turėti bent vieną simbolį (pvz. !@#$%)')
+      return
+    }
+    if (form.slaptazodis !== form.slaptazodis2) {
+      setError('Slaptažodžiai nesutampa')
       return
     }
     setLoading(true)
@@ -101,6 +105,15 @@ export default function RegistracijaPage() {
                 <p className="text-xs text-amber-600 font-medium mt-1">⚠️ Nepamiršk šio slaptažodžio — vėliau jo atkurti nebus galima!</p>
               </>
             )}
+          </div>
+          <div>
+            <label className="label">Pakartok slaptažodį</label>
+            <input
+              className="input"
+              type="password"
+              value={form.slaptazodis2}
+              onChange={e => setForm({ ...form, slaptazodis2: e.target.value })}
+            />
           </div>
         </div>
 
