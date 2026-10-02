@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Plus, Search, Edit2, Trash2, X, Check, Users, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 
-const EMPTY_FORM = { pavadinimas: '', data: '', laikas: '', vieta: '', reik_savanoriu: '', mentorius: '', pastabos: '', registracija_nuo_data: '', registracija_nuo_laikas: '' }
+const EMPTY_FORM = { pavadinimas: '', data: '', laikas: '', vieta: '', reik_savanoriu: '', valandos: '', mentorius: '', pastabos: '', registracija_nuo_data: '', registracija_nuo_laikas: '' }
 
 export default function RenginiaPage() {
   const [renginiai, setRenginiai] = useState([])
@@ -68,6 +68,7 @@ export default function RenginiaPage() {
       laikas: r.laikas || '',
       vieta: r.vieta || '',
       reik_savanoriu: r.reik_savanoriu || '',
+      valandos: r.valandos || '',
       mentorius: r.mentorius || '',
       pastabos: r.pastabos || '',
       registracija_nuo_data: regNuo ? regNuo.toISOString().slice(0, 10) : '',
@@ -84,7 +85,12 @@ export default function RenginiaPage() {
       ? new Date(`${form.registracija_nuo_data}T${form.registracija_nuo_laikas || '19:00'}:00`).toISOString()
       : null
     const { registracija_nuo_data, registracija_nuo_laikas, ...rest } = form
-    const payload = { ...rest, reik_savanoriu: form.reik_savanoriu ? parseInt(form.reik_savanoriu) : null, registracija_nuo }
+    const payload = {
+      ...rest,
+      reik_savanoriu: form.reik_savanoriu ? parseInt(form.reik_savanoriu) : null,
+      valandos: form.valandos ? parseFloat(form.valandos) : 0,
+      registracija_nuo
+    }
     if (editId) {
       await supabase.from('renginiai').update(payload).eq('id', editId)
     } else {
@@ -150,10 +156,17 @@ export default function RenginiaPage() {
                 <label className="label">Vieta / įstaiga</label>
                 <input className="input" value={form.vieta} onChange={e => setForm({ ...form, vieta: e.target.value })} placeholder="Jurbarko kultūros centras" />
               </div>
-              <div>
-                <label className="label">Reikia savanorių (sk.)</label>
-                <input className="input" type="number" min="0" value={form.reik_savanoriu} onChange={e => setForm({ ...form, reik_savanoriu: e.target.value })} placeholder="4" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Reikia savanorių (sk.)</label>
+                  <input className="input" type="number" min="0" value={form.reik_savanoriu} onChange={e => setForm({ ...form, reik_savanoriu: e.target.value })} placeholder="4" />
+                </div>
+                <div>
+                  <label className="label">Valandos</label>
+                  <input className="input" type="number" min="0" step="0.5" value={form.valandos} onChange={e => setForm({ ...form, valandos: e.target.value })} placeholder="3" />
+                </div>
               </div>
+              <p className="text-xs text-slate-400 -mt-1">Tiek valandų bus įskaityta kiekvienam savanoriui, kai renginys praeis</p>
               <div>
                 <label className="label">Mentorius</label>
                 <input className="input" value={form.mentorius} onChange={e => setForm({ ...form, mentorius: e.target.value })} placeholder="Mentoriaus vardas" />
@@ -235,6 +248,9 @@ export default function RenginiaPage() {
                                   {r.data && <span>📅 {r.data}{r.laikas ? ` · ${r.laikas}` : ''}</span>}
                                   {r.vieta && <span>📍 {r.vieta}</span>}
                                   {r.mentorius && <span>👤 {r.mentorius}</span>}
+                                  {r.valandos > 0
+                                    ? <span>⏱ {r.valandos}h</span>
+                                    : <span className="text-amber-600">⏱ Valandos nenurodytos</span>}
                                 </div>
                                 {r.pastabos && <p className="text-sm text-slate-400 mt-1">{r.pastabos}</p>}
                               </div>
