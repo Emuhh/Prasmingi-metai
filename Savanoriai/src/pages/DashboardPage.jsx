@@ -38,14 +38,15 @@ export default function DashboardPage() {
         { count: savorysteCount },
       ] = await Promise.all([
         supabase.from('savanoriai').select('*', { count: 'exact', head: true }),
-        supabase.from('savanorystes').select('valandos'),
+        supabase.from('savanorystes').select('valandos').gt('valandos', 0),
         supabase.from('renginiai').select('*', { count: 'exact', head: true }),
-        supabase.from('savanorystes').select('*', { count: 'exact', head: true }),
+        supabase.from('savanorystes').select('*', { count: 'exact', head: true }).gt('valandos', 0),
       ])
       const totalValandos = savData?.reduce((sum, r) => sum + (r.valandos || 0), 0) || 0
       const { data: recent } = await supabase
         .from('savanorystes')
         .select('*, savanoriai(vardas, pavarde), renginiai(pavadinimas)')
+        .gt('valandos', 0)
         .order('data', { ascending: false })
         .limit(5)
       setStats({ savanoriai: savCount || 0, valandos: totalValandos, renginiai: renCount || 0, savanorystes: savorysteCount || 0 })

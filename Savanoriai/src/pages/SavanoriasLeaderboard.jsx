@@ -23,6 +23,7 @@ export default function SavanoriasLeaderboard() {
         .from('savanorystes')
         .select('savanoris_id, valandos')
         .not('renginys_id', 'is', null)
+        .gt('valandos', 0)
 
       if (!savs) { setLoading(false); return }
 
