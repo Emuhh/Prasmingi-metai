@@ -69,10 +69,10 @@ export default function DashboardPage() {
         <p className="text-slate-500 mt-1">{format(new Date(), "yyyy 'm.' MMMM d 'd.'", { locale: lt })}</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Users} label="Savanoriai" value={stats.savanoriai} color="bg-brand-500" to="/savanoriai" />
-        <StatCard icon={Clock} label="Valandos iš viso" value={stats.valandos} color="bg-blue-500" to="/statistika" />
-        <StatCard icon={Calendar} label="Renginiai" value={stats.renginiai} color="bg-amber-500" to="/renginiai" />
-        <StatCard icon={TrendingUp} label="Savanorystės" value={stats.savanorystes} color="bg-purple-500" to="/savanorystes" />
+        <StatCard icon={Users} label="Savanoriai" value={stats.savanoriai} color="bg-brand-400" to="/savanoriai" />
+        <StatCard icon={Clock} label="Valandos iš viso" value={stats.valandos} color="bg-brand-500" to="/statistika" />
+        <StatCard icon={Calendar} label="Renginiai" value={stats.renginiai} color="bg-brand-600" to="/renginiai" />
+        <StatCard icon={TrendingUp} label="Savanorystės" value={stats.savanorystes} color="bg-brand-700" to="/savanorystes" />
       </div>
       <div className="card">
         <h2 className="font-display font-semibold text-lg text-slate-800 mb-4">Paskutinė veikla</h2>
