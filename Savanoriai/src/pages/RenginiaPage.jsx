@@ -13,6 +13,7 @@ export default function RenginiaPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [atidaryti, setAtidaryti] = useState({})
+  const [mentoriai, setMentoriai] = useState([])
 
   const load = async () => {
     setLoading(true)
@@ -21,6 +22,15 @@ export default function RenginiaPage() {
       .select('*, savanorystes(id)')
       .order('data', { ascending: false })
     setRenginiai(data || [])
+
+    const { data: ment } = await supabase
+      .from('profiles')
+      .select('vardas')
+      .eq('role', 'mentorius')
+      .not('vardas', 'is', null)
+      .order('vardas')
+    setMentoriai(ment || [])
+
     setLoading(false)
   }
 
@@ -168,8 +178,16 @@ export default function RenginiaPage() {
               </div>
               <p className="text-xs text-slate-400 -mt-1">Tiek valandų bus įskaityta kiekvienam savanoriui, kai renginys praeis</p>
               <div>
-                <label className="label">Mentorius</label>
-                <input className="input" value={form.mentorius} onChange={e => setForm({ ...form, mentorius: e.target.value })} placeholder="Mentoriaus vardas" />
+                <label className="label">Koordinuojantis asmuo</label>
+                <select className="input" value={form.mentorius} onChange={e => setForm({ ...form, mentorius: e.target.value })}>
+                  <option value="">Pasirinkti mentorių...</option>
+                  {mentoriai.map(m => (
+                    <option key={m.vardas} value={m.vardas}>{m.vardas}</option>
+                  ))}
+                  {form.mentorius && !mentoriai.some(m => m.vardas === form.mentorius) && (
+                    <option value={form.mentorius}>{form.mentorius}</option>
+                  )}
+                </select>
               </div>
               <div>
                 <label className="label">Pastabos</label>
