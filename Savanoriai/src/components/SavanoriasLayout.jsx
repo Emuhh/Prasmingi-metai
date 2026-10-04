@@ -20,9 +20,11 @@ export default function SavanoriasLayout() {
     async function load() {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('savanoris_id')
+        .select('savanoris_id, tema')
         .eq('id', user.id)
         .single()
+
+      if (profile?.tema) document.documentElement.dataset.theme = profile.tema
 
       if (!profile?.savanoris_id) return
 

@@ -24,10 +24,13 @@ export default function Layout() {
     if (!user) return
     supabase
       .from('profiles')
-      .select('vardas, avatar_url')
+      .select('vardas, avatar_url, tema')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => setProfilis(data))
+      .then(({ data }) => {
+        setProfilis(data)
+        if (data?.tema) document.documentElement.dataset.theme = data.tema
+      })
   }, [user])
 
   const handleSignOut = async () => {
