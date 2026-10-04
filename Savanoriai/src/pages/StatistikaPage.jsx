@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
-const COLORS = ['#16a34a','#2563eb','#d97706','#9333ea','#dc2626','#0891b2','#be185d','#7c3aed']
+const COLORS = [
+  'rgb(var(--brand-700))',
+  'rgb(var(--brand-500))',
+  'rgb(var(--brand-300))',
+  'rgb(var(--brand-800))',
+  'rgb(var(--brand-400))',
+  'rgb(var(--brand-200))',
+  'rgb(var(--brand-600))',
+  'rgb(var(--brand-900))',
+]
 
 export default function StatistikaPage() {
   const [data, setData] = useState({ topSavanoriai: [], byMonth: [], byMentorius: [], byOrg: [], totals: {} })
@@ -12,7 +21,7 @@ export default function StatistikaPage() {
   useEffect(() => {
     async function load() {
       const [{ data: savs }, { data: sav_info }, { data: renginiai }] = await Promise.all([
-        supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde, mentorius), renginiai(pavadinimas, vieta)'),
+        supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde, mentorius), renginiai(pavadinimas, vieta)').gt('valandos', 0),
         supabase.from('savanoriai').select('id, vardas, pavarde, mentorius'),
         supabase.from('renginiai').select('id, pavadinimas, vieta, data, reik_savanoriu, savanorystes(valandos)'),
       ])
@@ -68,7 +77,7 @@ export default function StatistikaPage() {
         }
         orgMap[org].renginiai += 1
         orgMap[org].reik_savanoriu_metai += r.reik_savanoriu || 0
-        const savs_org = r.savanorystes || []
+        const savs_org = (r.savanorystes || []).filter(x => x.valandos > 0)
         orgMap[org].savanorystes += savs_org.length
         orgMap[org].valandos += savs_org.reduce((s, x) => s + (x.valandos || 0), 0)
         if (r.data) {
@@ -203,7 +212,7 @@ export default function StatistikaPage() {
                   <ResponsiveContainer width="40%" height={220}>
                     <PieChart>
                       <Pie data={data.byOrg} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="savanorystes" paddingAngle={3}>
-                        {data.byOrg.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                        {data.byOrg.map((_, i) => <Cell key={i} style={{ fill: COLORS[i % COLORS.length] }} />)}
                       </Pie>
                       <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} formatter={(v) => [v, 'Savanorystės']} />
                     </PieChart>
