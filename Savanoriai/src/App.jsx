@@ -14,6 +14,7 @@ import SavanoriasLeaderboard from './pages/SavanoriasLeaderboard'
 import ManoSavanorystes from './pages/ManoSavanorystes'
 import SavanoriasProfile from './pages/SavanoriasProfile'
 import SavanoriasPasiekimai from './pages/SavanoriasPasiekimai'
+import MentoriausProfilis from './pages/MentoriausProfilis'
 
 function PrivateRoute({ children }) {
   const { user } = useAuth()
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="savanorystes" element={<SavanorystesPage />} />
         <Route path="renginiai" element={<RenginiaPage />} />
         <Route path="statistika" element={<StatistikaPage />} />
+        <Route path="profilis" element={<MentoriausProfilis />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

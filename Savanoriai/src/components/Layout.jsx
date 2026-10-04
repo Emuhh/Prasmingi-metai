@@ -1,8 +1,10 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import {
   LayoutDashboard, Users, ClipboardList, Calendar,
-  BarChart2, LogOut
+  BarChart2, LogOut, UserCircle
 } from 'lucide-react'
 
 const navItems = [
@@ -16,11 +18,29 @@ const navItems = [
 export default function Layout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const [profilis, setProfilis] = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('profiles')
+      .select('vardas, avatar_url')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => setProfilis(data))
+  }, [user])
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/login')
   }
+
+  const inicialai = (profilis?.vardas || user?.email || '?')
+    .split(' ')
+    .map(z => z[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <div className="flex min-h-screen">
@@ -67,10 +87,29 @@ export default function Layout() {
           ))}
         </nav>
         <div className="px-3 py-4 border-t border-slate-100">
-          <div className="px-4 py-2 mb-1">
-            <p className="text-xs text-slate-400">Prisijungęs</p>
-            <p className="text-sm font-medium text-slate-700 truncate">{user?.email}</p>
-          </div>
+          <NavLink
+            to="/profilis"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-2 ${
+                isActive ? 'bg-brand-50' : 'hover:bg-slate-50'
+              }`
+            }
+          >
+            {profilis?.avatar_url ? (
+              <img src={profilis.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+            ) : (
+              <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
+                {inicialai}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-800 truncate">
+                {profilis?.vardas || user?.email}
+              </p>
+              <p className="text-xs text-slate-400">Mano profilis</p>
+            </div>
+            <UserCircle size={16} className="text-slate-400 flex-shrink-0" />
+          </NavLink>
           <button onClick={handleSignOut} className="btn-danger w-full justify-center text-sm">
             <LogOut size={15} /> Atsijungti
           </button>
@@ -101,6 +140,25 @@ export default function Layout() {
               )}
             </NavLink>
           ))}
+          <NavLink
+            to="/profilis"
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+                isActive ? 'text-brand-600' : 'text-slate-400'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {profilis?.avatar_url ? (
+                  <img src={profilis.avatar_url} className="w-5 h-5 rounded-full object-cover" alt="" />
+                ) : (
+                  <UserCircle size={20} className={isActive ? 'text-brand-600' : 'text-slate-400'} />
+                )}
+                <span className="text-xs font-medium">Profilis</span>
+              </>
+            )}
+          </NavLink>
           <button
             onClick={handleSignOut}
             className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400"
