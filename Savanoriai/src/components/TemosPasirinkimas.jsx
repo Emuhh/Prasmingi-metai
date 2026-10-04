@@ -9,6 +9,8 @@ const TEMOS = [
   { id: 'zalia', pavadinimas: 'Žalia', spalva: '#16a34a' },
   { id: 'rozine', pavadinimas: 'Rožinė', spalva: '#e11d48' },
   { id: 'oranzine', pavadinimas: 'Oranžinė', spalva: '#d97706' },
+  { id: 'sviesiai-melyna', pavadinimas: 'Šviesiai mėlyna', spalva: '#269bd5' },
+  { id: 'geltona', pavadinimas: 'Geltona', spalva: '#ffc800' },
 ]
 
 function pritaikytiTema(tema) {
