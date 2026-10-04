@@ -144,15 +144,17 @@ export default function StatistikaPage() {
             {data.byMonth.length === 0 ? (
               <p className="text-slate-400 text-sm text-center py-8">Duomenų nėra</p>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={data.byMonth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
-                  <Bar dataKey="savanorystes" fill="#16a34a" radius={[4, 4, 0, 0]} name="Savanorystės" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="text-brand-600">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={data.byMonth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+                    <Bar dataKey="savanorystes" fill="currentColor" radius={[4, 4, 0, 0]} name="Savanorystės" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
           <div className="card">
