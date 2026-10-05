@@ -124,13 +124,13 @@ export default function Layout() {
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-10">
-        <div className="flex items-center justify-around px-2 py-2">
+        <div className="flex items-center gap-1 px-2 py-2 overflow-x-auto">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+                `flex flex-col items-center gap-0.5 px-3 py-1.5 flex-shrink-0 rounded-xl transition-all ${
                   isActive ? 'text-brand-600' : 'text-slate-400'
                 }`
               }
@@ -146,7 +146,7 @@ export default function Layout() {
           <NavLink
             to="/profilis"
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+              `flex flex-col items-center gap-0.5 px-3 py-1.5 flex-shrink-0 rounded-xl transition-all ${
                 isActive ? 'text-brand-600' : 'text-slate-400'
               }`
             }
