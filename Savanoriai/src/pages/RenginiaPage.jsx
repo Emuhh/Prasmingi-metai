@@ -25,11 +25,14 @@ export default function RenginiaPage() {
 
     const { data: ment } = await supabase
       .from('profiles')
-      .select('vardas')
+      .select('vardas, el_pastas')
       .eq('role', 'mentorius')
-      .not('vardas', 'is', null)
-      .order('vardas')
-    setMentoriai(ment || [])
+    setMentoriai(
+      (ment || [])
+        .map(m => m.vardas?.trim() || m.el_pastas)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'lt'))
+    )
 
     setLoading(false)
   }
@@ -182,9 +185,9 @@ export default function RenginiaPage() {
                 <select className="input" value={form.mentorius} onChange={e => setForm({ ...form, mentorius: e.target.value })}>
                   <option value="">Pasirinkti mentorių...</option>
                   {mentoriai.map(m => (
-                    <option key={m.vardas} value={m.vardas}>{m.vardas}</option>
+                    <option key={m} value={m}>{m}</option>
                   ))}
-                  {form.mentorius && !mentoriai.some(m => m.vardas === form.mentorius) && (
+                  {form.mentorius && !mentoriai.includes(form.mentorius) && (
                     <option value={form.mentorius}>{form.mentorius}</option>
                   )}
                 </select>
