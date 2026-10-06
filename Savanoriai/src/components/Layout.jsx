@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   LayoutDashboard, Users, ClipboardList, Calendar,
-  BarChart2, LogOut, UserCircle
+  BarChart2, LogOut, UserCircle, Inbox
 } from 'lucide-react'
 
 const navItems = [
@@ -12,6 +12,8 @@ const navItems = [
   { to: '/savanoriai',   icon: Users,            label: 'Savanoriai' },
   { to: '/savanorystes', icon: ClipboardList,    label: 'Savanorystės' },
   { to: '/renginiai',    icon: Calendar,         label: 'Renginiai' },
+  { to: '/rezervacijos', icon: Inbox,            label: 'Rezervacijos' },
+  { to: '/rezervacijos', icon: Inbox,            label: 'Rezervacijos' },
   { to: '/statistika',   icon: BarChart2,        label: 'Statistika' },
 ]
 
