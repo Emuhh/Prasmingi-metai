@@ -13,7 +13,6 @@ const navItems = [
   { to: '/savanorystes', icon: ClipboardList,    label: 'Savanorystės' },
   { to: '/renginiai',    icon: Calendar,         label: 'Renginiai' },
   { to: '/rezervacijos', icon: Inbox,            label: 'Rezervacijos' },
-  { to: '/rezervacijos', icon: Inbox,            label: 'Rezervacijos' },
   { to: '/statistika',   icon: BarChart2,        label: 'Statistika' },
 ]
 
@@ -166,7 +165,7 @@ export default function Layout() {
           </NavLink>
           <button
             onClick={handleSignOut}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400"
+            className="flex flex-col items-center gap-0.5 px-3 py-1.5 flex-shrink-0 rounded-xl text-slate-400"
           >
             <LogOut size={20} />
             <span className="text-xs font-medium">Išeiti</span>
