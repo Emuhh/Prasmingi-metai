@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Check, X, Calendar } from 'lucide-react'
+import { Check, X, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 
 const STATUSAI = {
   laukiama: { tekstas: 'Laukia', klase: 'bg-amber-50 text-amber-700' },
@@ -13,6 +13,8 @@ export default function RezervacijosPage() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState({})
   const [rodytiVisus, setRodytiVisus] = useState(false)
+  const [atidaryti, setAtidaryti] = useState({})
+  const [rodytiIstorija, setRodytiIstorija] = useState(false)
 
   const load = async () => {
     const { data } = await supabase
@@ -32,6 +34,8 @@ export default function RezervacijosPage() {
     setIrasai(prev => prev.map(i => (i.id === id ? { ...i, statusas } : i)))
     setUpdating(p => ({ ...p, [id]: false }))
   }
+
+  const perjungti = (id) => setAtidaryti(p => ({ ...p, [id]: !p[id] }))
 
   const grupes = {}
   irasai.forEach(i => {
@@ -57,7 +61,7 @@ export default function RezervacijosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="font-display font-bold text-3xl text-slate-800">Rezervacijos</h1>
           <p className="text-slate-500 mt-1">{laukiaViso} laukia patvirtinimo</p>
@@ -70,67 +74,83 @@ export default function RezervacijosPage() {
       {sarasas.length === 0 ? (
         <div className="card text-center text-slate-400 py-16">Visos rezervacijos peržiūrėtos</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {sarasas.map(g => {
             const patvirtinta = g.irasai.filter(i => i.statusas === 'patvirtinta').length
+            const laukia = g.irasai.filter(i => i.statusas === 'laukiama').length
             const limitas = g.renginys?.reik_savanoriu || 0
             const pilnas = limitas > 0 && patvirtinta >= limitas
+            const atidarytas = !!atidaryti[g.id]
             return (
               <div key={g.id} className="card p-0 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4">
-                  <div>
+                <button
+                  onClick={() => perjungti(g.id)}
+                  className="w-full px-6 py-4 flex items-center justify-between gap-4 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <div className="min-w-0">
                     <h2 className="font-display font-semibold text-lg text-slate-800">{g.renginys?.pavadinimas}</h2>
                     <p className="text-sm text-slate-500 flex items-center gap-1 mt-0.5">
                       <Calendar size={13} /> {g.renginys?.data}{g.renginys?.laikas ? ` · ${g.renginys.laikas}` : ''}
                     </p>
                   </div>
-                  {limitas > 0 && (
-                    <span className={`badge ${pilnas ? 'bg-green-50 text-green-700' : 'bg-brand-50 text-brand-700'}`}>
-                      Patvirtinta {patvirtinta}/{limitas}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  {g.irasai.map((i, idx) => {
-                    const st = STATUSAI[i.statusas] || STATUSAI.laukiama
-                    return (
-                      <div key={i.id} className="flex items-center gap-3 px-6 py-3 border-b border-slate-50 last:border-b-0">
-                        <span className="text-xs font-bold text-slate-400 w-5 text-right">{idx + 1}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-800">{i.savanoriai?.vardas} {i.savanoriai?.pavarde}</p>
-                          <p className="text-xs text-slate-400">
-                            {[i.savanoriai?.mokykla, i.savanoriai?.klase].filter(Boolean).join(', ')}
-                            {(i.savanoriai?.mokykla || i.savanoriai?.klase) ? ' · ' : ''}
-                            Užsiregistravo {new Date(i.sukurta).toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {laukia > 0 && (
+                      <span className="badge bg-amber-50 text-amber-700">Laukia {laukia}</span>
+                    )}
+                    {limitas > 0 && (
+                      <span className={`badge ${pilnas ? 'bg-green-50 text-green-700' : 'bg-brand-50 text-brand-700'}`}>
+                        {patvirtinta}/{limitas}
+                      </span>
+                    )}
+                    {atidarytas
+                      ? <ChevronUp size={18} className="text-slate-400" />
+                      : <ChevronDown size={18} className="text-slate-400" />}
+                  </div>
+                </button>
+
+                {atidarytas && (
+                  <div className="border-t border-slate-100">
+                    {g.irasai.map((i, idx) => {
+                      const st = STATUSAI[i.statusas] || STATUSAI.laukiama
+                      return (
+                        <div key={i.id} className="flex items-center gap-3 px-6 py-3 border-b border-slate-50 last:border-b-0">
+                          <span className="text-xs font-bold text-slate-400 w-5 text-right">{idx + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-800">{i.savanoriai?.vardas} {i.savanoriai?.pavarde}</p>
+                            <p className="text-xs text-slate-400">
+                              {[i.savanoriai?.mokykla, i.savanoriai?.klase].filter(Boolean).join(', ')}
+                              {(i.savanoriai?.mokykla || i.savanoriai?.klase) ? ' · ' : ''}
+                              Užsiregistravo {new Date(i.sukurta).toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          <span className={`badge ${st.klase}`}>{st.tekstas}</span>
+                          <div className="flex gap-1">
+                            {i.statusas !== 'patvirtinta' && (
+                              <button
+                                onClick={() => keistiStatusa(i.id, 'patvirtinta')}
+                                disabled={updating[i.id]}
+                                title="Patvirtinti"
+                                className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                              >
+                                <Check size={16} />
+                              </button>
+                            )}
+                            {i.statusas !== 'atmesta' && (
+                              <button
+                                onClick={() => keistiStatusa(i.id, 'atmesta')}
+                                disabled={updating[i.id]}
+                                title="Atmesti"
+                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <span className={`badge ${st.klase}`}>{st.tekstas}</span>
-                        <div className="flex gap-1">
-                          {i.statusas !== 'patvirtinta' && (
-                            <button
-                              onClick={() => keistiStatusa(i.id, 'patvirtinta')}
-                              disabled={updating[i.id]}
-                              title="Patvirtinti"
-                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                            >
-                              <Check size={16} />
-                            </button>
-                          )}
-                          {i.statusas !== 'atmesta' && (
-                            <button
-                              onClick={() => keistiStatusa(i.id, 'atmesta')}
-                              disabled={updating[i.id]}
-                              title="Atmesti"
-                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            >
-                              <X size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -139,34 +159,47 @@ export default function RezervacijosPage() {
 
       {isspresti.length > 0 && (
         <div className="mt-8">
-          <h2 className="font-display font-semibold text-lg text-slate-700 mb-3">Visos rezervacijos</h2>
-          <div className="card p-0 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="text-left font-medium text-slate-500 px-6 py-3">Savanoris</th>
-                    <th className="text-left font-medium text-slate-500 px-6 py-3">Renginys</th>
-                    <th className="text-left font-medium text-slate-500 px-6 py-3">Data</th>
-                    <th className="text-left font-medium text-slate-500 px-6 py-3">Statusas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isspresti.map(i => {
-                    const st = STATUSAI[i.statusas] || STATUSAI.laukiama
-                    return (
-                      <tr key={i.id} className="border-b border-slate-50 hover:bg-slate-50">
-                        <td className="px-6 py-3 font-medium text-slate-800">{i.savanoriai?.vardas} {i.savanoriai?.pavarde}</td>
-                        <td className="px-6 py-3 text-slate-600">{i.renginiai?.pavadinimas}</td>
-                        <td className="px-6 py-3 text-slate-500">{i.renginiai?.data}</td>
-                        <td className="px-6 py-3"><span className={`badge ${st.klase}`}>{st.tekstas}</span></td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+          <button
+            onClick={() => setRodytiIstorija(!rodytiIstorija)}
+            className="w-full flex items-center justify-between mb-3"
+          >
+            <h2 className="font-display font-semibold text-lg text-slate-700">
+              Visos rezervacijos <span className="text-sm font-normal text-slate-400">({isspresti.length})</span>
+            </h2>
+            {rodytiIstorija
+              ? <ChevronUp size={18} className="text-slate-400" />
+              : <ChevronDown size={18} className="text-slate-400" />}
+          </button>
+
+          {rodytiIstorija && (
+            <div className="card p-0 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left font-medium text-slate-500 px-6 py-3">Savanoris</th>
+                      <th className="text-left font-medium text-slate-500 px-6 py-3">Renginys</th>
+                      <th className="text-left font-medium text-slate-500 px-6 py-3">Data</th>
+                      <th className="text-left font-medium text-slate-500 px-6 py-3">Statusas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isspresti.map(i => {
+                      const st = STATUSAI[i.statusas] || STATUSAI.laukiama
+                      return (
+                        <tr key={i.id} className="border-b border-slate-50 hover:bg-slate-50">
+                          <td className="px-6 py-3 font-medium text-slate-800">{i.savanoriai?.vardas} {i.savanoriai?.pavarde}</td>
+                          <td className="px-6 py-3 text-slate-600">{i.renginiai?.pavadinimas}</td>
+                          <td className="px-6 py-3 text-slate-500">{i.renginiai?.data}</td>
+                          <td className="px-6 py-3"><span className={`badge ${st.klase}`}>{st.tekstas}</span></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
