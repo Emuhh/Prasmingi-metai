@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { Calendar, MapPin, User, Check, Clock } from 'lucide-react'
+import { Calendar, MapPin, User, Check, Clock, X } from 'lucide-react'
+
+const BUSENOS = {
+  laukiama: { tekstas: 'Laukia patvirtinimo', klase: 'bg-amber-50 text-amber-700', Ikona: Clock },
+  patvirtinta: { tekstas: 'Patvirtinta', klase: 'bg-green-50 text-green-700', Ikona: Check },
+  atmesta: { tekstas: 'Atmesta', klase: 'bg-red-50 text-red-700', Ikona: X },
+}
 
 export default function SavanoriasRenginiai() {
   const { user } = useAuth()
@@ -33,7 +39,7 @@ export default function SavanoriasRenginiai() {
 
       const { data } = await supabase
         .from('renginiai')
-        .select('*, savanorystes(id, savanoris_id)')
+        .select('*, savanorystes(id, savanoris_id, statusas)')
         .order('data', { ascending: true })
 
       setRenginiai(data || [])
@@ -60,6 +66,9 @@ export default function SavanoriasRenginiai() {
       .insert({ savanoris_id: savanorisId, renginys_id: renginysId })
       .select()
       .single()
+    if (error) {
+      alert('Atsiprašome, vietų šiam renginiui nebeliko.')
+    }
     if (!error && data) {
       setSavanorystes(prev => ({ ...prev, [renginysId]: data }))
       setRenginiai(prev => prev.map(r =>
@@ -110,8 +119,9 @@ export default function SavanoriasRenginiai() {
     </div>
   )
 
-  const busimi = renginiai.filter(r => r.data && r.data >= new Date().toISOString().slice(0, 10))
-  const praeję = renginiai.filter(r => !r.data || r.data < new Date().toISOString().slice(0, 10))
+  const siandien = new Date().toISOString().slice(0, 10)
+  const busimi = renginiai.filter(r => r.data && r.data >= siandien)
+  const praeję = renginiai.filter(r => !r.data || r.data < siandien)
 
   return (
     <div>
@@ -126,10 +136,10 @@ export default function SavanoriasRenginiai() {
           <div className="grid gap-3">
             {busimi.map(r => {
               const mano = savanorystes[r.id]
+              const busena = mano ? (BUSENOS[mano.statusas] || BUSENOS.laukiama) : null
               const isLoading = registering[r.id]
-              const vietosLiko = r.reik_savanoriu
-                ? Math.max(0, r.reik_savanoriu - (r.savanorystes?.length || 0))
-                : null
+              const uzimta = (r.savanorystes || []).filter(s => s.statusas !== 'atmesta').length
+              const vietosLiko = r.reik_savanoriu ? Math.max(0, r.reik_savanoriu - uzimta) : null
               const regAktyvt = registracijaAktyvt(r)
               const regNuoText = formatRegistracijaNuo(r)
 
@@ -156,20 +166,20 @@ export default function SavanoriasRenginiai() {
                       {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
                     </div>
                     <div className="ml-4 flex flex-col items-end gap-2">
-                      {mano && (
-                        <span className="badge bg-green-50 text-green-700 flex items-center gap-1">
-                          <Check size={12} /> Užsiregistravęs
+                      {busena && (
+                        <span className={`badge ${busena.klase} flex items-center gap-1`}>
+                          <busena.Ikona size={12} /> {busena.tekstas}
                         </span>
                       )}
                       {r.reik_savanoriu && (
                         <div className="text-right">
                           <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                            <User size={14} /> {r.savanorystes?.length || 0}/{r.reik_savanoriu}
+                            <User size={14} /> {uzimta}/{r.reik_savanoriu}
                           </div>
                           <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1">
                             <div
                               className={`h-full rounded-full transition-all ${vietosLiko === 0 ? 'bg-green-500' : 'bg-brand-500'}`}
-                              style={{ width: `${Math.min(100, ((r.savanorystes?.length || 0) / r.reik_savanoriu) * 100)}%` }}
+                              style={{ width: `${Math.min(100, (uzimta / r.reik_savanoriu) * 100)}%` }}
                             />
                           </div>
                         </div>
@@ -193,7 +203,7 @@ export default function SavanoriasRenginiai() {
                           <Clock size={13} /> Uždaryta
                         </button>
                       )}
-                      {mano && (
+                      {mano && mano.statusas !== 'atmesta' && (
                         <button
                           onClick={() => atšaukti(r.id)}
                           disabled={isLoading}
