@@ -174,7 +174,12 @@ export default function SavanoriasRenginiai() {
                           </div>
                         </div>
                       )}
-                      {!mano && regAktyvt && (
+                      {!mano && regAktyvt && vietosLiko === 0 && (
+                        <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
+                          Vietų nebėra
+                        </button>
+                      )}
+                      {!mano && regAktyvt && vietosLiko !== 0 && (
                         <button
                           onClick={() => registruotis(r.id)}
                           disabled={isLoading || !savanorisId}
