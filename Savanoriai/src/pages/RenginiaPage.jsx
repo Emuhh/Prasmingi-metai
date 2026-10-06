@@ -19,7 +19,7 @@ export default function RenginiaPage() {
     setLoading(true)
     const { data } = await supabase
       .from('renginiai')
-      .select('*, savanorystes(id)')
+      .select('*, savanorystes(id, statusas)')
       .order('data', { ascending: false })
     setRenginiai(data || [])
 
