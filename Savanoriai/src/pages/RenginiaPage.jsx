@@ -248,7 +248,7 @@ export default function RenginiaPage() {
                         </span>
                       </div>
                       {renginiai_m.sort((a, b) => (b.data || '').localeCompare(a.data || '')).map(r => {
-                        const registered = r.savanorystes?.length || 0
+                        const registered = (r.savanorystes || []).filter(s => s.statusas !== 'atmesta').length
                         const needed = r.reik_savanoriu || 0
                         const full = needed > 0 && registered >= needed
                         const regAktyvt = registracijaAktyvt(r)
