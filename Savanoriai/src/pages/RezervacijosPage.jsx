@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Check, X, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, X, Calendar, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 
 const STATUSAI = {
   laukiama: { tekstas: 'Laukia', klase: 'bg-amber-50 text-amber-700' },
@@ -125,6 +125,16 @@ export default function RezervacijosPage() {
                           </div>
                           <span className={`badge ${st.klase}`}>{st.tekstas}</span>
                           <div className="flex gap-1">
+                            {i.statusas !== 'laukiama' && (
+                              <button
+                                onClick={() => keistiStatusa(i.id, 'laukiama')}
+                                disabled={updating[i.id]}
+                                title="Atšaukti sprendimą"
+                                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                              >
+                                <RotateCcw size={16} />
+                              </button>
+                            )}
                             {i.statusas !== 'patvirtinta' && (
                               <button
                                 onClick={() => keistiStatusa(i.id, 'patvirtinta')}

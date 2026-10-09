@@ -44,7 +44,7 @@ export default function SavanorystesPage() {
   const handleSave = async () => {
     if (!form.savanoris_id || !form.valandos || !form.data) return
     setSaving(true)
-    const payload = { ...form, valandos: parseFloat(form.valandos) }
+    const payload = { ...form, valandos: parseFloat(form.valandos), statusas: 'patvirtinta' }
     if (editId) {
       await supabase.from('savanorystes').update(payload).eq('id', editId)
     } else {
