@@ -9,23 +9,44 @@ export default function PranesimaiPopup() {
 
   useEffect(() => {
     if (!user) return
-    async function load() {
+    let channel = null
+
+    async function start() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('savanoris_id')
         .eq('id', user.id)
         .single()
-      if (!profile?.savanoris_id) return
+      const savId = profile?.savanoris_id
+      if (!savId) return
 
-      const { data } = await supabase
-        .from('savanorystes')
-        .select('id, statusas, renginiai(pavadinimas, data, laikas)')
-        .eq('savanoris_id', profile.savanoris_id)
-        .eq('pranesta', false)
-        .in('statusas', ['patvirtinta', 'atmesta'])
-      setPranesimai(data || [])
+      const load = async () => {
+        const { data } = await supabase
+          .from('savanorystes')
+          .select('id, statusas, renginiai(pavadinimas, data, laikas)')
+          .eq('savanoris_id', savId)
+          .eq('pranesta', false)
+          .in('statusas', ['patvirtinta', 'atmesta'])
+        setPranesimai(data || [])
+      }
+
+      await load()
+
+      channel = supabase
+        .channel(`pranesimai-${savId}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'savanorystes', filter: `savanoris_id=eq.${savId}` },
+          () => load()
+        )
+        .subscribe()
     }
-    load()
+
+    start()
+
+    return () => {
+      if (channel) supabase.removeChannel(channel)
+    }
   }, [user])
 
   const uzdaryti = async () => {
