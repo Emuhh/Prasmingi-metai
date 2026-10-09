@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { Calendar, Trophy, LogOut, ClipboardList, UserCircle, Award } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import PranesimaiPopup from './PranesimaiPopup'
 
 const navItems = [
   { to: '/renginiai', icon: Calendar, label: 'Renginiai' },
@@ -129,6 +130,8 @@ export default function SavanoriasLayout() {
       <main className="flex-1 md:ml-64 p-4 md:p-8 min-h-screen pb-24 md:pb-8">
         <Outlet />
       </main>
+
+      <PranesimaiPopup />
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-10">
