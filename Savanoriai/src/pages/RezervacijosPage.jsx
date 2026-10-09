@@ -21,6 +21,7 @@ export default function RezervacijosPage() {
       .from('savanorystes')
       .select('id, statusas, sukurta, renginys_id, savanoriai(vardas, pavarde, mokykla, klase), renginiai(pavadinimas, data, laikas, reik_savanoriu)')
       .not('renginys_id', 'is', null)
+      .not('savanoris_id', 'is', null)
       .order('sukurta', { ascending: true })
     setIrasai(data || [])
     setLoading(false)

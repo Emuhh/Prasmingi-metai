@@ -20,7 +20,7 @@ export default function SavanorystesPage() {
     const [{ data: sav }, { data: ren }, { data: savs }] = await Promise.all([
       supabase.from('savanoriai').select('id, vardas, pavarde').order('pavarde'),
       supabase.from('renginiai').select('id, pavadinimas').order('pavadinimas'),
-      supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde), renginiai(pavadinimas)').order('data', { ascending: false, nullsFirst: true }).order('sukurta', { ascending: true }),
+      supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde), renginiai(pavadinimas)').not('savanoris_id', 'is', null).order('data', { ascending: false, nullsFirst: true }).order('sukurta', { ascending: true }),
     ])
     setSavanoriai(sav || [])
     setRenginiai(ren || [])

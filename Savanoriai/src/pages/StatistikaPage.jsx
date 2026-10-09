@@ -21,9 +21,9 @@ export default function StatistikaPage() {
   useEffect(() => {
     async function load() {
       const [{ data: savs }, { data: sav_info }, { data: renginiai }] = await Promise.all([
-        supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde, mentorius), renginiai(pavadinimas, vieta)').gt('valandos', 0),
+        supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde, mentorius), renginiai(pavadinimas, vieta)').not('savanoris_id', 'is', null).gt('valandos', 0),
         supabase.from('savanoriai').select('id, vardas, pavarde, mentorius'),
-        supabase.from('renginiai').select('id, pavadinimas, vieta, data, reik_savanoriu, savanorystes(valandos)'),
+        supabase.from('renginiai').select('id, pavadinimas, vieta, data, reik_savanoriu, savanorystes(valandos, savanoris_id)'),
       ])
 
       if (!savs) { setLoading(false); return }
@@ -77,7 +77,7 @@ export default function StatistikaPage() {
         }
         orgMap[org].renginiai += 1
         orgMap[org].reik_savanoriu_metai += r.reik_savanoriu || 0
-        const savs_org = (r.savanorystes || []).filter(x => x.valandos > 0)
+        const savs_org = (r.savanorystes || []).filter(x => x.valandos > 0 && x.savanoris_id)
         orgMap[org].savanorystes += savs_org.length
         orgMap[org].valandos += savs_org.reduce((s, x) => s + (x.valandos || 0), 0)
         if (r.data) {

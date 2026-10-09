@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import { Plus, Search, Edit2, Trash2, X, Check, Users, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 
 const EMPTY_FORM = { pavadinimas: '', data: '', laikas: '', vieta: '', reik_savanoriu: '', valandos: '', mentorius: '', pastabos: '', registracija_nuo_data: '', registracija_nuo_laikas: '' }
 
 export default function RenginiaPage() {
+  const { user } = useAuth()
   const [renginiai, setRenginiai] = useState([])
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -19,7 +21,7 @@ export default function RenginiaPage() {
     setLoading(true)
     const { data } = await supabase
       .from('renginiai')
-      .select('*, savanorystes(id, statusas)')
+      .select('*, savanorystes(id, statusas, mentorius_id)')
       .order('data', { ascending: false })
     setRenginiai(data || [])
 
@@ -117,6 +119,19 @@ export default function RenginiaPage() {
   const handleDelete = async (id) => {
     if (!confirm('Ar tikrai norite ištrinti šį renginį?')) return
     await supabase.from('renginiai').delete().eq('id', id)
+    await load()
+  }
+
+  const dalyvauti = async (renginysId) => {
+    const { error } = await supabase
+      .from('savanorystes')
+      .insert({ renginys_id: renginysId, mentorius_id: user.id, statusas: 'patvirtinta' })
+    if (error) alert('Vietų šiam renginiui nebeliko.')
+    await load()
+  }
+
+  const nedalyvauti = async (savId) => {
+    await supabase.from('savanorystes').delete().eq('id', savId)
     await load()
   }
 
@@ -252,6 +267,7 @@ export default function RenginiaPage() {
                         const needed = r.reik_savanoriu || 0
                         const full = needed > 0 && registered >= needed
                         const regAktyvt = registracijaAktyvt(r)
+                        const manoReg = (r.savanorystes || []).find(s => s.mentorius_id === user?.id)
                         return (
                           <div key={r.id} className="px-6 py-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-b-0">
                             <div className="flex items-start justify-between">
@@ -286,8 +302,17 @@ export default function RenginiaPage() {
                                     </div>
                                   </div>
                                 )}
+                                {manoReg ? (
+                                  <button onClick={() => nedalyvauti(manoReg.id)} className="btn-secondary text-xs py-1 px-3">
+                                    Nedalyvausiu
+                                  </button>
+                                ) : (
+                                  <button onClick={() => dalyvauti(r.id)} className="btn-primary text-xs py-1 px-3">
+                                    Dalyvausiu
+                                  </button>
+                                )}
                                 <div className="flex gap-1">
-                                  <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"><Edit2 size={14} /></button>
+                                  <button onClick={() => openEdit(r)}className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"><Edit2 size={14} /></button>
                                   <button onClick={() => handleDelete(r.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                                 </div>
                               </div>

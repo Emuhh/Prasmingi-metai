@@ -38,9 +38,9 @@ export default function DashboardPage() {
         { count: savorysteCount },
       ] = await Promise.all([
         supabase.from('savanoriai').select('*', { count: 'exact', head: true }),
-        supabase.from('savanorystes').select('valandos').gt('valandos', 0),
+        supabase.from('savanorystes').select('valandos').not('savanoris_id', 'is', null).gt('valandos', 0),
         supabase.from('renginiai').select('*', { count: 'exact', head: true }),
-        supabase.from('savanorystes').select('*', { count: 'exact', head: true }).gt('valandos', 0),
+        supabase.from('savanorystes').select('*', { count: 'exact', head: true }).not('savanoris_id', 'is', null).gt('valandos', 0),
       ])
       const totalValandos = savData?.reduce((sum, r) => sum + (r.valandos || 0), 0) || 0
       const { data: recent } = await supabase
