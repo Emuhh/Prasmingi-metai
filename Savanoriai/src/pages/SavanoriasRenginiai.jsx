@@ -39,7 +39,7 @@ export default function SavanoriasRenginiai() {
 
       const { data } = await supabase
         .from('renginiai')
-        .select('*, savanorystes(id, savanoris_id, statusas)')
+        .select('*, savanorystes(id, savanoris_id, statusas, mentorius_id, profiles(vardas, el_pastas))')
         .order('data', { ascending: true })
 
       setRenginiai(data || [])
@@ -164,6 +164,15 @@ export default function SavanoriasRenginiai() {
                         </div>
                       )}
                       {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
+                      {(() => {
+                        const mentoriai = (r.savanorystes || []).filter(s => s.mentorius_id)
+                        if (mentoriai.length === 0) return null
+                        return (
+                          <p className="text-sm text-brand-600 mt-2">
+                            👥 Dalyvaus mentoriai: {mentoriai.map(m => m.profiles?.vardas || m.profiles?.el_pastas).join(', ')}
+                          </p>
+                        )
+                      })()}
                     </div>
                     <div className="ml-4 flex flex-col items-end gap-2">
                       {busena && (

@@ -22,7 +22,7 @@ export default function RenginiaPage() {
     setLoading(true)
     const { data } = await supabase
       .from('renginiai')
-      .select('*, savanorystes(id, statusas, mentorius_id, savanoriai(vardas, pavarde))')
+      .select('*, savanorystes(id, statusas, mentorius_id, savanoriai(vardas, pavarde), profiles(vardas, el_pastas))')
       .order('data', { ascending: false })
     setRenginiai(data || [])
 
@@ -310,7 +310,9 @@ export default function RenginiaPage() {
                                               key={s.id}
                                               className={`badge ${s.statusas === 'patvirtinta' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}
                                             >
-                                              {s.mentorius_id ? 'Mentorius' : `${s.savanoriai?.vardas} ${s.savanoriai?.pavarde}`}
+                                              {s.mentorius_id
+                                                ? `${s.profiles?.vardas || s.profiles?.el_pastas} (mentorius)`
+                                                : `${s.savanoriai?.vardas} ${s.savanoriai?.pavarde}`}
                                               {s.statusas === 'laukiama' ? ' · laukia' : ''}
                                             </span>
                                           ))}
