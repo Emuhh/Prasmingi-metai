@@ -7,6 +7,8 @@ const EMPTY_FORM = { vardas: '', pavarde: '', el_pastas: '', telefonas: '', ment
 export default function SavanoriaiPage() {
   const [savanoriai, setSavanoriai] = useState([])
   const [search, setSearch] = useState('')
+  const [rikiavimas, setRikiavimas] = useState('pavarde')
+  const [mentFiltras, setMentFiltras] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showProfile, setShowProfile] = useState(null)
   const [profileSavanorystes, setProfileSavanorystes] = useState([])
@@ -27,9 +29,22 @@ export default function SavanoriaiPage() {
 
   useEffect(() => { load() }, [])
 
-  const filtered = savanoriai.filter(s =>
-    `${s.vardas} ${s.pavarde} ${s.mentorius}`.toLowerCase().includes(search.toLowerCase())
-  )
+  const kiekSav = (s) => (s.savanorystes || []).filter(r => r.valandos > 0).length
+  const mentoriuSarasas = [...new Set(savanoriai.map(s => s.mentorius).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'lt'))
+
+  const filtered = savanoriai
+    .filter(s => `${s.vardas} ${s.pavarde} ${s.mentorius}`.toLowerCase().includes(search.toLowerCase()))
+    .filter(s => !mentFiltras || (mentFiltras === '__be' ? !s.mentorius : s.mentorius === mentFiltras))
+    .sort((a, b) => {
+      if (rikiavimas === 'savanorystes') return kiekSav(b) - kiekSav(a)
+      if (rikiavimas === 'vardas') return (a.vardas || '').localeCompare(b.vardas || '', 'lt')
+      if (rikiavimas === 'mentorius') {
+        return (a.mentorius || 'žžž').localeCompare(b.mentorius || 'žžž', 'lt')
+          || (a.pavarde || '').localeCompare(b.pavarde || '', 'lt')
+      }
+      return (a.pavarde || '').localeCompare(b.pavarde || '', 'lt')
+    })
 
   const openProfile = (s) => {
     setShowProfile(s)
@@ -83,6 +98,19 @@ export default function SavanoriaiPage() {
       <div className="relative mb-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
         <input className="input pl-10" placeholder="Ieškoti pagal vardą, pavardę, mentorių..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <select className="input" value={rikiavimas} onChange={e => setRikiavimas(e.target.value)}>
+          <option value="pavarde">Rikiuoti: pavardė (A–Ž)</option>
+          <option value="vardas">Rikiuoti: vardas (A–Ž)</option>
+          <option value="mentorius">Rikiuoti: mentorius</option>
+          <option value="savanorystes">Rikiuoti: daugiausia savanorysčių</option>
+        </select>
+        <select className="input" value={mentFiltras} onChange={e => setMentFiltras(e.target.value)}>
+          <option value="">Visi mentoriai</option>
+          {mentoriuSarasas.map(m => <option key={m} value={m}>{m}</option>)}
+          <option value="__be">Be mentoriaus</option>
+        </select>
       </div>
 
       {/* Pridėjimo forma */}

@@ -14,21 +14,22 @@ const COLORS = [
 ]
 
 export default function StatistikaPage() {
-  const [data, setData] = useState({ topSavanoriai: [], byMonth: [], byMentorius: [], byOrg: [], totals: {} })
+  const [data, setData] = useState({ topSavanoriai: [], byMonth: [], byMentorius: [], byKoord: [], byOrg: [], totals: {} })
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('savanoriai')
+  const [rodytiVisus, setRodytiVisus] = useState(false)
 
   useEffect(() => {
     async function load() {
       const [{ data: savs }, { data: sav_info }, { data: renginiai }] = await Promise.all([
         supabase.from('savanorystes').select('*, savanoriai(vardas, pavarde, mentorius), renginiai(pavadinimas, vieta)').not('savanoris_id', 'is', null).gt('valandos', 0),
         supabase.from('savanoriai').select('id, vardas, pavarde, mentorius'),
-        supabase.from('renginiai').select('id, pavadinimas, vieta, data, reik_savanoriu, savanorystes(valandos, savanoris_id)'),
+        supabase.from('renginiai').select('id, pavadinimas, vieta, data, reik_savanoriu, mentorius, savanorystes(valandos, savanoris_id)'),
       ])
 
       if (!savs) { setLoading(false); return }
 
-      // Top savanoriai - rikiuojami pagal savanorystes, o lygiose - pagal valandas
+      // Visi savanoriai pagal savanorystes, lygiose pagal valandas
       const savMap = {}
       savs.forEach(s => {
         const key = s.savanoris_id
@@ -37,10 +38,8 @@ export default function StatistikaPage() {
         savMap[key].valandos += s.valandos || 0
       })
       const topSavanoriai = Object.values(savMap).sort((a, b) =>
-        b.savanorystes !== a.savanorystes
-          ? b.savanorystes - a.savanorystes
-          : b.valandos - a.valandos
-      ).slice(0, 10)
+        b.savanorystes !== a.savanorystes ? b.savanorystes - a.savanorystes : b.valandos - a.valandos
+      )
 
       // Pagal mėnesį
       const monthMap = {}
@@ -53,7 +52,7 @@ export default function StatistikaPage() {
       })
       const byMonth = Object.values(monthMap).sort((a, b) => a.month.localeCompare(b.month)).slice(-12)
 
-      // Pagal mentorių
+      // Savanorių mentoriai
       const mentMap = {}
       savs.forEach(s => {
         const key = s.savanoriai?.mentorius || 'Nenurodyta'
@@ -63,18 +62,23 @@ export default function StatistikaPage() {
       })
       const byMentorius = Object.values(mentMap).map(m => ({ ...m, savanoriai: m.savanoriai.size })).sort((a, b) => b.savanorystes - a.savanorystes)
 
+      // Koordinuojantys mentoriai (iš renginių)
+      const koordMap = {}
+      renginiai?.forEach(r => {
+        const key = r.mentorius || 'Nenurodyta'
+        if (!koordMap[key]) koordMap[key] = { name: key, renginiai: 0, savanorystes: 0, valandos: 0 }
+        koordMap[key].renginiai += 1
+        const ivyke = (r.savanorystes || []).filter(x => x.valandos > 0 && x.savanoris_id)
+        koordMap[key].savanorystes += ivyke.length
+        koordMap[key].valandos += ivyke.reduce((s, x) => s + (x.valandos || 0), 0)
+      })
+      const byKoord = Object.values(koordMap).sort((a, b) => b.renginiai - a.renginiai)
+
       // Pagal organizaciją
       const orgMap = {}
       renginiai?.forEach(r => {
         const org = r.vieta || 'Nenurodyta'
-        if (!orgMap[org]) orgMap[org] = {
-          name: org,
-          renginiai: 0,
-          savanorystes: 0,
-          valandos: 0,
-          reik_savanoriu_metai: 0,
-          byMonth: {}
-        }
+        if (!orgMap[org]) orgMap[org] = { name: org, renginiai: 0, savanorystes: 0, valandos: 0, reik_savanoriu_metai: 0, byMonth: {} }
         orgMap[org].renginiai += 1
         orgMap[org].reik_savanoriu_metai += r.reik_savanoriu || 0
         const savs_org = (r.savanorystes || []).filter(x => x.valandos > 0 && x.savanoris_id)
@@ -91,7 +95,7 @@ export default function StatistikaPage() {
       const byOrg = Object.values(orgMap).sort((a, b) => b.savanorystes - a.savanorystes)
 
       const totalValandos = savs.reduce((s, r) => s + (r.valandos || 0), 0)
-      setData({ topSavanoriai, byMonth, byMentorius, byOrg, totals: { valandos: totalValandos, irasu: savs.length, savanoriai: sav_info?.length || 0 } })
+      setData({ topSavanoriai, byMonth, byMentorius, byKoord, byOrg, totals: { valandos: totalValandos, irasu: savs.length, savanoriai: sav_info?.length || 0 } })
       setLoading(false)
     }
     load()
@@ -109,6 +113,8 @@ export default function StatistikaPage() {
     { id: 'mentorius', label: 'Mentoriai' },
   ]
 
+  const rodomiSavanoriai = rodytiVisus ? data.topSavanoriai : data.topSavanoriai.slice(0, 10)
+
   return (
     <div>
       <div className="mb-6">
@@ -116,7 +122,6 @@ export default function StatistikaPage() {
         <p className="text-slate-500 mt-1">Savanorystės apžvalga</p>
       </div>
 
-      {/* Bendri skaičiai */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Savanoriai iš viso', value: data.totals.savanoriai },
@@ -130,7 +135,6 @@ export default function StatistikaPage() {
         ))}
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {tabs.map(t => (
           <button
@@ -145,7 +149,7 @@ export default function StatistikaPage() {
         ))}
       </div>
 
-      {/* Savanoriai tab */}
+      {/* Savanoriai */}
       {activeTab === 'savanoriai' && (
         <div className="space-y-6">
           <div className="card">
@@ -167,45 +171,56 @@ export default function StatistikaPage() {
             )}
           </div>
           <div className="card">
-            <h2 className="font-display font-semibold text-lg text-slate-800 mb-4">Aktyviausi savanoriai</h2>
+            <h2 className="font-display font-semibold text-lg text-slate-800 mb-4">
+              Aktyviausi savanoriai <span className="text-sm font-normal text-slate-400">({data.topSavanoriai.length})</span>
+            </h2>
             {data.topSavanoriai.length === 0 ? (
               <p className="text-slate-400 text-sm text-center py-8">Duomenų nėra</p>
             ) : (
-              <div className="space-y-2">
-                {data.topSavanoriai.map((s, i) => {
-                  const max = data.topSavanoriai[0].savanorystes
-                  return (
-                    <div key={s.name} className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-slate-400 w-5 text-right">{i + 1}</span>
-                      <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs flex-shrink-0">
-                        {s.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="font-medium text-slate-800">{s.name}</span>
-                          <span className="text-brand-600 font-semibold">{s.savanorystes} sav. · {s.valandos}h</span>
+              <>
+                <div className="space-y-2">
+                  {rodomiSavanoriai.map((s, i) => {
+                    const max = data.topSavanoriai[0].savanorystes
+                    return (
+                      <div key={s.name + i} className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-6 text-right">{i + 1}</span>
+                        <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs flex-shrink-0">
+                          {s.name.split(' ').map(n => n[0]).join('')}
                         </div>
-                        <div className="h-1.5 bg-slate-100 rounded-full">
-                          <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(s.savanorystes / max) * 100}%` }} />
+                        <div className="flex-1">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium text-slate-800">{s.name}</span>
+                            <span className="text-brand-600 font-semibold">{s.savanorystes} sav. · {s.valandos}h</span>
+                          </div>
+                          <div className="h-1.5 bg-slate-100 rounded-full">
+                            <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(s.savanorystes / max) * 100}%` }} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+                {data.topSavanoriai.length > 10 && (
+                  <button
+                    onClick={() => setRodytiVisus(!rodytiVisus)}
+                    className="w-full mt-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-xl transition-colors"
+                  >
+                    {rodytiVisus ? '▲ Rodyti tik 10' : `▼ Rodyti visus (${data.topSavanoriai.length})`}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
       )}
 
-      {/* Organizacijos tab */}
+      {/* Organizacijos */}
       {activeTab === 'organizacijos' && (
         <div className="space-y-6">
           {data.byOrg.length === 0 ? (
             <div className="card text-center text-slate-400 py-12">Duomenų nėra</div>
           ) : (
             <>
-              {/* Skritulinė diagrama */}
               <div className="card">
                 <h2 className="font-display font-semibold text-lg text-slate-800 mb-4">Savanorystės pagal organizaciją</h2>
                 <div className="flex items-center gap-6">
@@ -229,28 +244,15 @@ export default function StatistikaPage() {
                 </div>
               </div>
 
-              {/* Kiekvienos organizacijos detalės */}
               {data.byOrg.map(org => (
                 <div key={org.name} className="card">
                   <div className="flex items-start justify-between mb-4">
                     <h2 className="font-display font-semibold text-lg text-slate-800">{org.name}</h2>
                     <div className="flex gap-4 text-right">
-                      <div>
-                        <p className="text-xs text-slate-400">Renginiai</p>
-                        <p className="font-bold text-slate-800">{org.renginiai}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400">Savanorystės</p>
-                        <p className="font-bold text-brand-600">{org.savanorystes}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400">Valandos</p>
-                        <p className="font-bold text-slate-800">{org.valandos}h</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400">Reikėjo sav.</p>
-                        <p className="font-bold text-slate-800">{org.reik_savanoriu_metai}</p>
-                      </div>
+                      <div><p className="text-xs text-slate-400">Renginiai</p><p className="font-bold text-slate-800">{org.renginiai}</p></div>
+                      <div><p className="text-xs text-slate-400">Savanorystės</p><p className="font-bold text-brand-600">{org.savanorystes}</p></div>
+                      <div><p className="text-xs text-slate-400">Valandos</p><p className="font-bold text-slate-800">{org.valandos}h</p></div>
+                      <div><p className="text-xs text-slate-400">Reikėjo sav.</p><p className="font-bold text-slate-800">{org.reik_savanoriu_metai}</p></div>
                     </div>
                   </div>
                   {Object.keys(org.byMonth).length > 0 && (
@@ -284,34 +286,68 @@ export default function StatistikaPage() {
         </div>
       )}
 
-      {/* Mentoriai tab */}
+      {/* Mentoriai */}
       {activeTab === 'mentorius' && (
-        <div className="card">
-          <h2 className="font-display font-semibold text-lg text-slate-800 mb-4">Savanorystės pagal mentorių</h2>
-          {data.byMentorius.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-8">Duomenų nėra</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="text-left font-medium text-slate-500 py-2">Mentorius</th>
-                    <th className="text-right font-medium text-slate-500 py-2">Savanoriai</th>
-                    <th className="text-right font-medium text-slate-500 py-2">Savanorystės</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.byMentorius.map(m => (
-                    <tr key={m.name} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="py-2 font-medium text-slate-800">{m.name}</td>
-                      <td className="py-2 text-right text-slate-600">{m.savanoriai}</td>
-                      <td className="py-2 text-right font-medium text-brand-600">{m.savanorystes}</td>
+        <div className="space-y-6">
+          <div className="card">
+            <h2 className="font-display font-semibold text-lg text-slate-800 mb-1">Koordinuojantys mentoriai</h2>
+            <p className="text-sm text-slate-400 mb-4">Pagal renginius, kuriuose mentorius nurodytas kaip koordinuojantis asmuo</p>
+            {data.byKoord.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-8">Duomenų nėra</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left font-medium text-slate-500 py-2">Mentorius</th>
+                      <th className="text-right font-medium text-slate-500 py-2">Renginiai</th>
+                      <th className="text-right font-medium text-slate-500 py-2">Savanorystės</th>
+                      <th className="text-right font-medium text-slate-500 py-2">Valandos</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {data.byKoord.map(m => (
+                      <tr key={m.name} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="py-2 font-medium text-slate-800">{m.name}</td>
+                        <td className="py-2 text-right text-slate-600">{m.renginiai}</td>
+                        <td className="py-2 text-right font-medium text-brand-600">{m.savanorystes}</td>
+                        <td className="py-2 text-right text-slate-600">{m.valandos}h</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <h2 className="font-display font-semibold text-lg text-slate-800 mb-1">Savanorių mentoriai</h2>
+            <p className="text-sm text-slate-400 mb-4">Pagal mentorių, priskirtą savanoriui jo profilyje</p>
+            {data.byMentorius.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-8">Duomenų nėra</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left font-medium text-slate-500 py-2">Mentorius</th>
+                      <th className="text-right font-medium text-slate-500 py-2">Savanoriai</th>
+                      <th className="text-right font-medium text-slate-500 py-2">Savanorystės</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.byMentorius.map(m => (
+                      <tr key={m.name} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="py-2 font-medium text-slate-800">{m.name}</td>
+                        <td className="py-2 text-right text-slate-600">{m.savanoriai}</td>
+                        <td className="py-2 text-right font-medium text-brand-600">{m.savanorystes}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

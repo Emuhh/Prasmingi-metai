@@ -16,12 +16,13 @@ export default function RenginiaPage() {
   const [saving, setSaving] = useState(false)
   const [atidaryti, setAtidaryti] = useState({})
   const [mentoriai, setMentoriai] = useState([])
+  const [atidarytas, setAtidarytas] = useState(null)
 
   const load = async () => {
     setLoading(true)
     const { data } = await supabase
       .from('renginiai')
-      .select('*, savanorystes(id, statusas, mentorius_id)')
+      .select('*, savanorystes(id, statusas, mentorius_id, savanoriai(vardas, pavarde))')
       .order('data', { ascending: false })
     setRenginiai(data || [])
 
@@ -290,6 +291,34 @@ export default function RenginiaPage() {
                                     : <span className="text-amber-600">⏱ Valandos nenurodytos</span>}
                                 </div>
                                 {r.pastabos && <p className="text-sm text-slate-400 mt-1">{r.pastabos}</p>}
+                                {(() => {
+                                  const dalyviai = (r.savanorystes || []).filter(s => s.statusas !== 'atmesta')
+                                  if (dalyviai.length === 0) return null
+                                  return (
+                                    <>
+                                      <button
+                                        onClick={() => setAtidarytas(atidarytas === r.id ? null : r.id)}
+                                        className="text-sm text-brand-600 font-medium mt-2 flex items-center gap-1"
+                                      >
+                                        {atidarytas === r.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                        Savanoriai ({dalyviai.length})
+                                      </button>
+                                      {atidarytas === r.id && (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                          {dalyviai.map(s => (
+                                            <span
+                                              key={s.id}
+                                              className={`badge ${s.statusas === 'patvirtinta' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}
+                                            >
+                                              {s.mentorius_id ? 'Mentorius' : `${s.savanoriai?.vardas} ${s.savanoriai?.pavarde}`}
+                                              {s.statusas === 'laukiama' ? ' · laukia' : ''}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </>
+                                  )
+                                })()}
                               </div>
                               <div className="flex items-center gap-3 ml-4 flex-shrink-0">
                                 {needed > 0 && (

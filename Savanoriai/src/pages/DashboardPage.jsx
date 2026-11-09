@@ -46,6 +46,7 @@ export default function DashboardPage() {
       const { data: recent } = await supabase
         .from('savanorystes')
         .select('*, savanoriai(vardas, pavarde), renginiai(pavadinimas)')
+        .not('savanoris_id', 'is', null)
         .gt('valandos', 0)
         .order('data', { ascending: false })
         .limit(5)
