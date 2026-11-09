@@ -102,7 +102,7 @@ export default function RegistracijaPage() {
             {showPasswordHint && (
               <>
                 <p className="text-xs text-slate-400 mt-1.5">Bent 8 simboliai, bent 1 skaičius ir 1 simbolis (!@#$ ir pan.)</p>
-                <p className="text-xs text-amber-600 font-medium mt-1">⚠️ Nepamiršk šio slaptažodžio — vėliau jo atkurti nebus galima!</p>
+                <p className="text-xs text-amber-600 font-medium mt-1">⚠️ Įsimink šį slaptažodį. Pamiršus jį galėsi atkurti per el. paštą.</p>
               </>
             )}
           </div>
