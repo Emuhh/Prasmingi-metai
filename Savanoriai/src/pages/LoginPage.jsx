@@ -57,6 +57,9 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+            <div className="text-right -mt-2">
+              <Link to="/pamirsau" className="text-sm text-brand-600 font-medium">Pamiršai slaptažodį?</Link>
+            </div>
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center mt-2 py-3">
               {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Prisijungti'}
             </button>
