@@ -4,6 +4,8 @@ import Layout from './components/Layout'
 import SavanoriasLayout from './components/SavanoriasLayout'
 import LoginPage from './pages/LoginPage'
 import RegistracijaPage from './pages/RegistracijaPage'
+import PamirsauPage from './pages/PamirsauPage'
+import NaujasSlaptazodisPage from './pages/NaujasSlaptazodisPage'
 import DashboardPage from './pages/DashboardPage'
 import SavanoriaiPage from './pages/SavanoriaiPage'
 import SavanorystesPage from './pages/SavanorystesPage'
@@ -16,8 +18,6 @@ import ManoSavanorystes from './pages/ManoSavanorystes'
 import SavanoriasProfile from './pages/SavanoriasProfile'
 import SavanoriasPasiekimai from './pages/SavanoriasPasiekimai'
 import MentoriausProfilis from './pages/MentoriausProfilis'
-import PamirsauPage from './pages/PamirsauPage'
-import NaujasSlaptazodisPage from './pages/NaujasSlaptazodisPage'
 
 function PrivateRoute({ children }) {
   const { user } = useAuth()
@@ -26,7 +26,7 @@ function PrivateRoute({ children }) {
 }
 
 export default function App() {
-  const { role, user } = useAuth()
+  const { role } = useAuth()
 
   if (role === 'savanoris') {
     return (
@@ -52,6 +52,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/registracija" element={<RegistracijaPage />} />
+      <Route path="/pamirsau" element={<PamirsauPage />} />
+      <Route path="/naujas-slaptazodis" element={<NaujasSlaptazodisPage />} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
