@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { Calendar, MapPin, User, Check, Clock, X } from 'lucide-react'
 
+const DIENU_ATGAL = 14
+
 const BUSENOS = {
   laukiama: { tekstas: 'Laukia patvirtinimo', klase: 'bg-amber-50 text-amber-700', Ikona: Clock },
   patvirtinta: { tekstas: 'Patvirtinta', klase: 'bg-green-50 text-green-700', Ikona: Check },
@@ -120,8 +122,108 @@ export default function SavanoriasRenginiai() {
   )
 
   const siandien = new Date().toISOString().slice(0, 10)
+  const riba = new Date(Date.now() - DIENU_ATGAL * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
   const busimi = renginiai.filter(r => r.data && r.data >= siandien)
-  const praeję = renginiai.filter(r => !r.data || r.data < siandien)
+  const neseniai = renginiai
+    .filter(r => r.data && r.data < siandien && r.data >= riba)
+    .sort((a, b) => b.data.localeCompare(a.data))
+  const seni = renginiai
+    .filter(r => !r.data || r.data < riba)
+    .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+
+  const renginioKortele = (r, praejes) => {
+    const mano = savanorystes[r.id]
+    const busena = mano ? (BUSENOS[mano.statusas] || BUSENOS.laukiama) : null
+    const isLoading = registering[r.id]
+    const uzimta = (r.savanorystes || []).filter(s => s.statusas !== 'atmesta').length
+    const vietosLiko = r.reik_savanoriu ? Math.max(0, r.reik_savanoriu - uzimta) : null
+    const regAktyvt = praejes || registracijaAktyvt(r)
+    const regNuoText = formatRegistracijaNuo(r)
+    const mentoriai = (r.savanorystes || []).filter(s => s.mentorius_id)
+    const galiAtsaukti = mano && mano.statusas !== 'atmesta' && (!praejes || mano.statusas === 'laukiama')
+
+    return (
+      <div key={r.id} className={`card border-l-4 ${praejes ? 'border-l-slate-300' : 'border-l-brand-500'}`}>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="font-semibold text-slate-800 mb-2">{r.pavadinimas}</h3>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+              {r.data && (
+                <span className="flex items-center gap-1">
+                  <Calendar size={13} /> {r.data}{r.laikas && ` · ${r.laikas}`}
+                </span>
+              )}
+              {r.vieta && <span className="flex items-center gap-1"><MapPin size={13} /> {r.vieta}</span>}
+              {r.mentorius && <span className="flex items-center gap-1"><User size={13} /> {r.mentorius}</span>}
+            </div>
+            {!praejes && !regAktyvt && regNuoText && (
+              <div className="mt-2 flex items-center gap-1.5 text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5 w-fit">
+                <Clock size={13} />
+                Registracija atsidaro {regNuoText}
+              </div>
+            )}
+            {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
+            {mentoriai.length > 0 && (
+              <p className="text-sm text-brand-600 mt-2">
+                👥 Dalyvaus mentoriai: {mentoriai.map(m => m.profiles?.vardas || m.profiles?.el_pastas).join(', ')}
+              </p>
+            )}
+          </div>
+          <div className="ml-4 flex flex-col items-end gap-2">
+            {busena && (
+              <span className={`badge ${busena.klase} flex items-center gap-1`}>
+                <busena.Ikona size={12} /> {busena.tekstas}
+              </span>
+            )}
+            {r.reik_savanoriu && (
+              <div className="text-right">
+                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
+                  <User size={14} /> {uzimta}/{r.reik_savanoriu}
+                </div>
+                <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1">
+                  <div
+                    className={`h-full rounded-full transition-all ${vietosLiko === 0 ? 'bg-green-500' : 'bg-brand-500'}`}
+                    style={{ width: `${Math.min(100, (uzimta / r.reik_savanoriu) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {!mano && regAktyvt && vietosLiko === 0 && (
+              <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
+                Vietų nebėra
+              </button>
+            )}
+            {!mano && regAktyvt && vietosLiko !== 0 && (
+              <button
+                onClick={() => registruotis(r.id)}
+                disabled={isLoading || !savanorisId}
+                className="btn-primary text-sm py-1.5"
+              >
+                {isLoading
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : praejes ? '+ Dalyvavau' : '+ Registruotis'}
+              </button>
+            )}
+            {!mano && !regAktyvt && (
+              <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
+                <Clock size={13} /> Uždaryta
+              </button>
+            )}
+            {galiAtsaukti && (
+              <button
+                onClick={() => atšaukti(r.id)}
+                disabled={isLoading}
+                className="btn-secondary text-sm py-1.5"
+              >
+                Atšaukti
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -134,107 +236,28 @@ export default function SavanoriasRenginiai() {
         <div className="mb-8">
           <h2 className="font-display font-semibold text-lg text-slate-700 mb-3">📅 Artėjantys</h2>
           <div className="grid gap-3">
-            {busimi.map(r => {
-              const mano = savanorystes[r.id]
-              const busena = mano ? (BUSENOS[mano.statusas] || BUSENOS.laukiama) : null
-              const isLoading = registering[r.id]
-              const uzimta = (r.savanorystes || []).filter(s => s.statusas !== 'atmesta').length
-              const vietosLiko = r.reik_savanoriu ? Math.max(0, r.reik_savanoriu - uzimta) : null
-              const regAktyvt = registracijaAktyvt(r)
-              const regNuoText = formatRegistracijaNuo(r)
-
-              return (
-                <div key={r.id} className="card border-l-4 border-l-brand-500">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-slate-800 mb-2">{r.pavadinimas}</h3>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-                        {r.data && (
-                          <span className="flex items-center gap-1">
-                            <Calendar size={13} /> {r.data}{r.laikas && ` · ${r.laikas}`}
-                          </span>
-                        )}
-                        {r.vieta && <span className="flex items-center gap-1"><MapPin size={13} /> {r.vieta}</span>}
-                        {r.mentorius && <span className="flex items-center gap-1"><User size={13} /> {r.mentorius}</span>}
-                      </div>
-                      {!regAktyvt && regNuoText && (
-                        <div className="mt-2 flex items-center gap-1.5 text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5 w-fit">
-                          <Clock size={13} />
-                          Registracija atsidaro {regNuoText}
-                        </div>
-                      )}
-                      {r.pastabos && <p className="text-sm text-slate-400 mt-2">{r.pastabos}</p>}
-                      {(() => {
-                        const mentoriai = (r.savanorystes || []).filter(s => s.mentorius_id)
-                        if (mentoriai.length === 0) return null
-                        return (
-                          <p className="text-sm text-brand-600 mt-2">
-                            👥 Dalyvaus mentoriai: {mentoriai.map(m => m.profiles?.vardas || m.profiles?.el_pastas).join(', ')}
-                          </p>
-                        )
-                      })()}
-                    </div>
-                    <div className="ml-4 flex flex-col items-end gap-2">
-                      {busena && (
-                        <span className={`badge ${busena.klase} flex items-center gap-1`}>
-                          <busena.Ikona size={12} /> {busena.tekstas}
-                        </span>
-                      )}
-                      {r.reik_savanoriu && (
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                            <User size={14} /> {uzimta}/{r.reik_savanoriu}
-                          </div>
-                          <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1">
-                            <div
-                              className={`h-full rounded-full transition-all ${vietosLiko === 0 ? 'bg-green-500' : 'bg-brand-500'}`}
-                              style={{ width: `${Math.min(100, (uzimta / r.reik_savanoriu) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                      {!mano && regAktyvt && vietosLiko === 0 && (
-                        <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
-                          Vietų nebėra
-                        </button>
-                      )}
-                      {!mano && regAktyvt && vietosLiko !== 0 && (
-                        <button
-                          onClick={() => registruotis(r.id)}
-                          disabled={isLoading || !savanorisId}
-                          className="btn-primary text-sm py-1.5"
-                        >
-                          {isLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : '+ Registruotis'}
-                        </button>
-                      )}
-                      {!mano && !regAktyvt && (
-                        <button disabled className="btn-secondary text-sm py-1.5 opacity-50 cursor-not-allowed">
-                          <Clock size={13} /> Uždaryta
-                        </button>
-                      )}
-                      {mano && mano.statusas !== 'atmesta' && (
-                        <button
-                          onClick={() => atšaukti(r.id)}
-                          disabled={isLoading}
-                          className="btn-secondary text-sm py-1.5"
-                        >
-                          Atšaukti
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {busimi.map(r => renginioKortele(r, false))}
           </div>
         </div>
       )}
 
-      {praeję.length > 0 && (
+      {neseniai.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-display font-semibold text-lg text-slate-700 mb-1">🕓 Neseniai praėję</h2>
+          <p className="text-sm text-slate-500 mb-3">
+            Dalyvavai, bet pamiršai užsiregistruoti? Spausk „Dalyvavau“, ir mentorius patvirtins.
+          </p>
+          <div className="grid gap-3">
+            {neseniai.map(r => renginioKortele(r, true))}
+          </div>
+        </div>
+      )}
+
+      {seni.length > 0 && (
         <div>
           <h2 className="font-display font-semibold text-lg text-slate-700 mb-3">✅ Praėję</h2>
           <div className="grid gap-3">
-            {praeję.map(r => (
+            {seni.map(r => (
               <div key={r.id} className="card opacity-60">
                 <h3 className="font-medium text-slate-700 mb-1">{r.pavadinimas}</h3>
                 <div className="flex flex-wrap gap-x-4 text-sm text-slate-400">
